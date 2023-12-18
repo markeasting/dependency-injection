@@ -12,9 +12,9 @@ export class Container implements Injectable {
 
     __inject: InjectableType.SHARED;
 
-    private overides        = new Map<ClassType<any>, any>();
-    private services        = new Map<ClassType<any>, any>();
+    private overides        = new Map<ClassType<any>, ClassType<any>>();
     private dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
+    private services        = new Map<ClassType<any>, any>();
 
     private compiled = false;
 
@@ -22,7 +22,10 @@ export class Container implements Injectable {
         this.services.set(Container, this);
     }
 
-    build() {
+    /**
+     * Apply overrides for services if they were set via {@link override()}
+     */
+    public build() {
         this.compiled = true;
 
         this.overides.forEach((impl, key) => {
@@ -30,11 +33,27 @@ export class Container implements Injectable {
         });
     }
 
+    /** Register a class as a shared service */
+    public register<T extends ClassType<Injectable>>(
+        ctor: T, 
+        dependencies: Dependencies<T> = [] as Dependencies<T>
+    ) {
+
+        const deps = dependencies as any[];
+
+        if (deps.includes(ctor)) {
+            throw new Error(`Cyclical dependency for ${ctor.name}`);
+        }
+
+        this.services.set(ctor, null);
+        this.dependencies.set(ctor, deps);
+    }
+
     /** 
      * Override a service with another concrete implementation. 
      * You may omit 'dependencies' to use the same dependencies as the overridden class. 
      */
-    override<T extends ClassType<Injectable>>(
+    public override<T extends ClassType<Injectable>>(
         ctor: T,
         overrideCtor: T, 
         dependencies?: Dependencies<T>
@@ -55,29 +74,16 @@ export class Container implements Injectable {
         }
     }
 
-    /** Register a class as a shared service */
-    register<T extends ClassType<Injectable>>(
-        ctor: T, 
-        dependencies: Dependencies<T> = [] as Dependencies<T>
-    ) {
-
-        const deps = dependencies as any[];
-
-        if (deps.includes(ctor)) {
-            throw new Error(`Cyclical dependency for ${ctor.name}`);
-        }
-
-        this.services.set(ctor, null);
-        this.dependencies.set(ctor, deps);
-    }
-
-    /** Get a shared service from the container - dependencies will be resolved */
-    get<T extends object>(ctor: ClassType<T>): T {
+    /** 
+     * Get a shared service from the container - dependencies will be resolved 
+     * @TODO currently, this also returns transients services if requested. This will be fixed at some point. 
+     */
+    public get<T extends object>(ctor: ClassType<T>): T {
         return this.resolve(ctor as ClassType<Injectable>) as T;
     }
 
     /** Resolve an instance of the given class */
-    resolve<T extends Injectable>(ctor: ClassType<T>): T {
+    private resolve<T extends Injectable>(ctor: ClassType<T>): T {
         if (!this.compiled && this.overides.size) {
             throw new Error('Container is has overrides. Try using container.build() first.');
         }
