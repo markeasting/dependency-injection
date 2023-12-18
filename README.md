@@ -49,5 +49,15 @@ const myInstance = container.get(MyClass);
 console.log(myInstance);
 ```
 
-## Development / build
-`npm run build` (simply executes `tsc`).
+## Development / build / test
+`bun test --watch` - runs unit tests 
+
+### Building
+This package is a Typescript-only bundle that you can import into your projects. Therefore, you should build it along with your project. 
+
+If you still desire to create a build, you can run the following commands: 
+
+`npm run build` - simply runs the Typescript compiler, `tsc`.
+
+`npm run watch` - runs `tsc` in watch mode
+
