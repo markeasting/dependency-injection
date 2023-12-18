@@ -136,3 +136,7 @@ test('Container:get() - override', () => {
     expect(instance.testDep1()).toEqual(TEST_VALUE1);
     expect(instance.testDep2()).toEqual(TEST_VALUE2);
 });
+
+/** 
+ * @TODO add tests for bundles and bundle configuration
+ */

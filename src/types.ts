@@ -14,6 +14,12 @@ export enum InjectableType {
  */
 export interface Injectable {
     __inject: InjectableType;
+
+    // configure?(config: any): void;
+}
+
+export interface BundleInterface extends Injectable {
+    configure(config: any): void; // @TODO should actually be static, but we can't interface that
 }
 
 /** The 'name' of a class, rather than an instance. E.g. `MyClass` instead of `new MyClass()` */
