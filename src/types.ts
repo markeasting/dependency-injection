@@ -18,12 +18,15 @@ export interface Injectable {
     // configure?(config: any): void;
 }
 
-export interface BundleInterface extends Injectable {
-    configure(config: any): void; // @TODO should actually be static, but we can't interface that
-}
-
 /** The 'name' of a class, rather than an instance. E.g. `MyClass` instead of `new MyClass()` */
 export type ClassType<T> = { new (...args: any[]): T };
+
+export interface BundleInterface<T extends object> extends Injectable {
+    config: T;
+    configure(config: T): void;
+}
+
+export type BundleConfigType<T> = T extends BundleInterface<infer X> ? X : never;
 
 // type GenericOf<T> = T extends Injectable<infer X> ? X : never;
 type IsInjectable<T> = T extends Injectable ? T : false;

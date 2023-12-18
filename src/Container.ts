@@ -1,4 +1,4 @@
-import { BundleInterface, ClassType, Dependencies, Injectable, InjectableType } from ".";
+import { BundleConfigType, BundleInterface, ClassType, Dependencies, Injectable, InjectableType } from ".";
 
 /**
  * Very minimal Dependency Injection container. 
@@ -15,7 +15,7 @@ export class Container implements Injectable {
     private overides        = new Map<ClassType<any>, ClassType<any>>();
     private dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
     private services        = new Map<ClassType<any>, any>();
-    private configs         = new Map<ClassType<BundleInterface>, any>();
+    private configs         = new Map<ClassType<BundleInterface<any>>, any>();
 
     private compiled = false;
 
@@ -40,12 +40,15 @@ export class Container implements Injectable {
     }
 
     /** Apply bundle configuration */
-    public configure<T extends ClassType<BundleInterface>>(ctor: T, config: any) {        
-        this.configs.set(ctor, config);
+    public configure<T extends BundleInterface<any>>(
+        bundle: ClassType<T>, 
+        config: BundleConfigType<T>
+    ) {
+        this.configs.set(bundle, config);
     }
 
     /** Configure bundles and apply implementation overrides if they were set via {@link override()} */
-    public build(bundles: Record<string, ClassType<BundleInterface>> = {}) {
+    public build(bundles: Record<string, ClassType<BundleInterface<any>>> = {}) {
         this.compiled = true;
 
         this.overides.forEach((impl, key) => {
@@ -54,15 +57,19 @@ export class Container implements Injectable {
 
         for (const key in bundles) {
             const bundle = bundles[key];
+            const bundleinstance = new bundles[key];
             const config = this.configs.get(bundle);
-            const configuratorMethod = (bundle as any).configure;
+
+            bundleinstance.configure(config);
+
+            // const configuratorMethod = (bundle as any).configure;
             
-            /* Call method statically */
-            if (configuratorMethod) {
-                configuratorMethod(config);
-            } else {
-                throw new MissingBundleConfigurationError(bundle);
-            }
+            // /* Call method statically */
+            // if (configuratorMethod) {
+            //     configuratorMethod(config);
+            // } else {
+            //     throw new MissingBundleConfigurationError(bundle);
+            // }
         }
     }
 
@@ -100,7 +107,7 @@ export class Container implements Injectable {
     }
 
     /** Resolve an instance of the given class */
-    private resolve<T extends Injectable>(ctor: ClassType<T>): T {
+    private resolve<T extends Injectable>(ctor: ClassType<T>): T|undefined {
         if (!this.compiled && this.overides.size) {
             throw new Error('Container is has overrides. Try using container.build() first.');
         }
@@ -112,7 +119,7 @@ export class Container implements Injectable {
             }
             return instance;
         }
-        throw new ServiceNotFoundError(ctor);
+        // throw new ServiceNotFoundError(ctor);
     }
 
     /** Create an instance with injected dependencies */
@@ -126,11 +133,11 @@ export class Container implements Injectable {
     }
 }
 
-export class MissingBundleConfigurationError extends Error {
-    constructor(ctor: ClassType<any>) {
-        super(`'${ctor.name}' is registered as a bundle, but no static 'configure' method was found.`);
-    }
-};
+// export class MissingBundleConfigurationError extends Error {
+//     constructor(ctor: ClassType<any>) {
+//         super(`'${ctor.name}' is registered as a bundle, but no static 'configure' method was found.`);
+//     }
+// };
 
 export class ServiceNotFoundError extends Error {
     constructor(ctor: ClassType<any>) {
