@@ -51,7 +51,7 @@ export class Container implements Injectable<any> {
             }
             return instance;
         }
-        throw new Error(`'${ctor.name}' is not a registered service. Please call 'container.register(${ctor.name})'`);
+        throw new ServiceNotFoundError(ctor);
     }
 
     /** Create an instance with injected dependencies */
@@ -65,3 +65,8 @@ export class Container implements Injectable<any> {
     }
 }
 
+export class ServiceNotFoundError extends Error {
+    constructor(ctor: ClassType<any>) {
+        super(`'${ctor.name}' is not a registered service. Please call 'container.register(${ctor.name})'`);
+    }
+};
