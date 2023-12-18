@@ -13,11 +13,47 @@ export class Container implements Injectable {
 
     __inject: InjectableType.SHARED;
 
+    private overides        = new Map<ClassType<any>, any>();
     private services        = new Map<ClassType<any>, any>();
     private dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
 
+    private compiled = false;
+
     constructor() {
         this.services.set(Container, this);
+    }
+
+    build() {
+        this.compiled = true;
+
+        this.overides.forEach((impl, key) => {
+            this.services.set(key, this.createInstance(impl));
+        });
+    }
+
+    /** 
+     * Override a service with another concrete implementation. 
+     * You may omit 'dependencies' to use the same dependencies as the overridden class. 
+     */
+    override<T extends ClassType<Injectable>>(
+        ctor: T,
+        overrideCtor: T, 
+        dependencies?: Dependencies<T>
+    ) {
+        if (this.compiled) {
+            throw new Error('Container was already compiled. Try overriding earlier.');
+        }
+        this.services.set(ctor, null);
+        this.overides.set(ctor, overrideCtor);
+
+        if (dependencies?.length) {
+            this.dependencies.set(overrideCtor, dependencies as any[]);
+        } else {
+            const existingDeps = this.dependencies.get(ctor);
+
+            if (existingDeps) 
+                this.dependencies.set(overrideCtor, existingDeps);
+        }
     }
 
     /** Register a class as a shared service */
@@ -43,6 +79,9 @@ export class Container implements Injectable {
 
     /** Resolve an instance of the given class */
     resolve<T extends Injectable>(ctor: ClassType<T>): T {
+        if (!this.compiled && this.overides.size) {
+            throw new Error('Container is has overrides. Try using container.build() first.');
+        }
         if (this.services.has(ctor)) {
             let instance = this.services.get(ctor);
             if (!instance) {

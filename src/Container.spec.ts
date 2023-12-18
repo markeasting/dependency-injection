@@ -3,6 +3,7 @@ import { Container, Injectable, InjectableType, ServiceNotFoundError, assert } f
 
 const TEST_VALUE1 = 69;
 const TEST_VALUE2 = 42;
+const TEST_VALUE3 = 32;
 
 class MyService implements Injectable {
     __inject: InjectableType.SHARED;
@@ -33,6 +34,8 @@ class MyClass implements Injectable {
 
 test('Container:construct()', () => {
     const container = new Container();
+    container.build();
+
     expect(container.get(Container)).toBe(container);
 });
 
@@ -40,6 +43,7 @@ test('Container:register()', () => {
     const container = new Container();
 
     container.register(MyService);
+    container.build();
 
     expect(container.get(MyService)).toEqual(new MyService);
 });
@@ -48,6 +52,7 @@ test('Container:get() - zero dependencies', () => {
     const container = new Container();
 
     container.register(MyClass);
+    container.build();
 
     const instance = container.get(MyClass);
 
@@ -58,6 +63,7 @@ test('Container:get() - non-shared instance', () => {
     const container = new Container();
 
     container.register(MyNonSharedService);
+    container.build();
 
     const instance = container.get(MyNonSharedService);
 
@@ -71,6 +77,7 @@ test('Container:get() - throw if service is not registered', () => {
 
     // container.register(MyModule); // This would normally be required
     container.register(MyClass, [MyService, new MyNonSharedService, config]);
+    container.build();
 
     // Check if container throws: MyModule wasn't registered
     expect(() => { container.get(MyService) }).toThrow(
@@ -90,6 +97,7 @@ test('Container:get() - inject deps', () => {
 
     container.register(MyService);
     container.register(MyClass, [MyService, new MyNonSharedService, config]);
+    container.build();
 
     const instance = container.get(MyClass);
     
@@ -101,3 +109,30 @@ test('Container:get() - inject deps', () => {
     expect(instance.testDep2()).toEqual(TEST_VALUE2);
 });
 
+
+test('Container:get() - override', () => {
+    const container = new Container();
+
+    const config = new MyClassConfig();
+
+    class OverrideClass extends MyClass {
+        extraMethod() { return TEST_VALUE3; }
+    }
+
+    container.register(MyService);
+    container.register(MyClass, [MyService, new MyNonSharedService, config]);
+
+    // container.override(MyClass, OverrideClass, [MyService, new MyNonSharedService, config]);
+    container.override(MyClass, OverrideClass);
+    container.build();
+
+    const instance = container.get(MyClass);
+    
+    expect(instance).toBeInstanceOf(OverrideClass);
+    expect(instance).not.toBeUndefined();
+    expect(instance.dep).not.toBeUndefined();
+    expect(instance.nonSharedDep).not.toBeUndefined();
+    expect(instance.config).toStrictEqual(config);
+    expect(instance.testDep1()).toEqual(TEST_VALUE1);
+    expect(instance.testDep2()).toEqual(TEST_VALUE2);
+});
