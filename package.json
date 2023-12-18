@@ -1,0 +1,17 @@
+{
+  "name": "@wildsea/dependency-injection",
+  "author": "Mark Oosting",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "",
+  "main": "src/index.ts",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
