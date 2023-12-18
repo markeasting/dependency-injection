@@ -14,11 +14,16 @@ class MyNonSharedService implements Injectable {
     getValue2() { return TEST_VALUE2 }
 }
 
+class MyClassConfig {
+    somevar: boolean = true;
+}
+
 class MyClass implements Injectable {
     __inject: InjectableType.SHARED;
     constructor(
         public dep: MyService,
         public nonSharedDep: MyNonSharedService,
+        public config: MyClassConfig
     ) {
         // assert(dep, nonSharedDep);
     }
@@ -62,8 +67,10 @@ test('Container:get() - non-shared instance', () => {
 test('Container:get() - throw if service is not registered', () => {
     const container = new Container();
 
+    const config = new MyClassConfig();
+
     // container.register(MyModule); // This would normally be required
-    container.register(MyClass, [MyService, new MyNonSharedService]);
+    container.register(MyClass, [MyService, new MyNonSharedService, config]);
 
     // Check if container throws: MyModule wasn't registered
     expect(() => { container.get(MyService) }).toThrow(
@@ -79,14 +86,17 @@ test('Container:get() - throw if service is not registered', () => {
 test('Container:get() - inject deps', () => {
     const container = new Container();
 
+    const config = new MyClassConfig();
+
     container.register(MyService);
-    container.register(MyClass, [MyService, new MyNonSharedService]);
+    container.register(MyClass, [MyService, new MyNonSharedService, config]);
 
     const instance = container.get(MyClass);
     
     expect(instance).not.toBeUndefined();
     expect(instance.dep).not.toBeUndefined();
     expect(instance.nonSharedDep).not.toBeUndefined();
+    expect(instance.config).toStrictEqual(config);
     expect(instance.testDep1()).toEqual(TEST_VALUE1);
     expect(instance.testDep2()).toEqual(TEST_VALUE2);
 });

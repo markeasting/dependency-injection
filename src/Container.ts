@@ -1,4 +1,4 @@
-import { ClassType, Dependencies, SharedDep } from ".";
+import { ClassType, Dependencies } from ".";
 import { Injectable, InjectableType } from "./Injectable";
 
 /**
@@ -55,7 +55,7 @@ export class Container implements Injectable {
     }
 
     /** Create an instance with injected dependencies */
-    private createInstance<T extends Injectable>(ctor: SharedDep<T>): T {
+    private createInstance<T extends Injectable>(ctor: ClassType<T>): T {
 
         /* Resolve dependencies */
         const depsCtors = this.dependencies.get(ctor) || [];
