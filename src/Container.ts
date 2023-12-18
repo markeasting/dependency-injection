@@ -61,15 +61,6 @@ export class Container implements Injectable {
             const config = this.configs.get(bundle);
 
             bundleinstance.configure(config);
-
-            // const configuratorMethod = (bundle as any).configure;
-            
-            // /* Call method statically */
-            // if (configuratorMethod) {
-            //     configuratorMethod(config);
-            // } else {
-            //     throw new MissingBundleConfigurationError(bundle);
-            // }
         }
     }
 
@@ -83,7 +74,7 @@ export class Container implements Injectable {
         dependencies?: Dependencies<T>
     ) {
         if (this.compiled) {
-            throw new Error('Container was already compiled. Try overriding earlier.');
+            throw new CompilerOverrideUserError;
         }
         this.services.set(ctor, null);
         this.overides.set(ctor, overrideCtor);
@@ -100,16 +91,16 @@ export class Container implements Injectable {
 
     /** 
      * Get a shared service from the container - dependencies will be resolved 
-     * @TODO currently, this also returns transients services if requested. This will be fixed at some point. 
+     * @TODO currently, this also returns transients services if requested. Will be fixed at some point. 
      */
     public get<T extends object>(ctor: ClassType<T>): T {
-        return this.resolve(ctor as ClassType<Injectable>) as T;
+        return this.resolve(ctor as ClassType<Injectable>, true) as T;
     }
 
     /** Resolve an instance of the given class */
-    private resolve<T extends Injectable>(ctor: ClassType<T>): T|undefined {
-        if (!this.compiled && this.overides.size) {
-            throw new Error('Container is has overrides. Try using container.build() first.');
+    public resolve<T extends Injectable>(ctor: ClassType<T>, strict = true): T|undefined {
+        if (!this.compiled) {
+            throw new ContainerNotResolvedError();
         }
         if (this.services.has(ctor)) {
             let instance = this.services.get(ctor);
@@ -119,7 +110,8 @@ export class Container implements Injectable {
             }
             return instance;
         }
-        // throw new ServiceNotFoundError(ctor);
+        if (strict)
+            throw new ServiceNotFoundError(ctor);
     }
 
     /** Create an instance with injected dependencies */
@@ -139,8 +131,20 @@ export class Container implements Injectable {
 //     }
 // };
 
+export class ContainerNotResolvedError extends Error {
+    constructor() {
+        super('Container is has overrides. Try using container.build() first.');
+    }
+}
+
+export class CompilerOverrideUserError extends Error {
+    constructor() {
+        super('Container was already compiled. You can only call override() before build().');
+    }
+}
+
 export class ServiceNotFoundError extends Error {
     constructor(ctor: ClassType<any>) {
-        super(`'${ctor.name}' is not a registered service. Please call 'container.register(${ctor.name})'`);
+        super(`'${ctor.name}' is not a registered service. Did you forget to call 'container.register(${ctor.name})'? Or did you forget to load a bundle?`);
     }
 };

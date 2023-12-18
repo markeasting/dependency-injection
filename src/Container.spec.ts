@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Container, Injectable, InjectableType, ServiceNotFoundError, assert } from ".";
+import { CompilerOverrideUserError, Container, Injectable, InjectableType, ServiceNotFoundError, assert } from ".";
 
 const TEST_VALUE1 = 69;
 const TEST_VALUE2 = 42;
@@ -122,8 +122,7 @@ test('Container:get() - override', () => {
     container.register(MyService);
     container.register(MyClass, [MyService, new MyNonSharedService, config]);
 
-    // container.override(MyClass, OverrideClass, [MyService, new MyNonSharedService, config]);
-    container.override(MyClass, OverrideClass);
+    container.override(MyClass, OverrideClass); // Optionally, you can also override deps
     container.build();
 
     const instance = container.get(MyClass);
@@ -135,6 +134,26 @@ test('Container:get() - override', () => {
     expect(instance.config).toStrictEqual(config);
     expect(instance.testDep1()).toEqual(TEST_VALUE1);
     expect(instance.testDep2()).toEqual(TEST_VALUE2);
+});
+
+test('Container:get() - throw if build was called before override', () => {
+    const container = new Container();
+
+    const config = new MyClassConfig();
+
+    class OverrideClass extends MyClass {
+        extraMethod() { return TEST_VALUE3; }
+    }
+
+    // Check if container throws: cannot override if build() was called
+    expect(() => { 
+        container.register(MyService);
+        container.build();
+
+        container.override(MyClass, OverrideClass);
+    }).toThrow(
+        new CompilerOverrideUserError()
+    );
 });
 
 /** 
