@@ -13,35 +13,48 @@ The main point of this container is to expose the dependencies of (sub)systems m
 - All services are 'shared' by default: you will always receive the same instance.
 
 ```ts
-
-import { Container, Injectable } from "@wildsea/dependency-injection";
+import { Container, Injectable, InjectableType } from "@wildsea/dependency-injection";
 
 /* Create the container */
 const container = new Container();
 
-/* Injectable with zero dependencies  */
+/* Shared service with zero dependencies  */
 class Foo implements Injectable { 
-    config: any;
+    __inject: InjectableType.SHARED;
     
-    log(value: any) {
-        console.log(value);
+    getValue() {
+        return 42;
     }
+}
+
+/* Create a non-shared service, must be constructed each time */
+class Bar implements Injectable { 
+    __inject: InjectableType.NEW_INSTANCE;
+
+    prop = 69;
 }
 
 /* MyClass depends on `Foo` and some config object */
 class MyClass implements Injectable {
+    __inject: InjectableType.SHARED;
     constructor(
         public foo: Foo, 
+        public bar: Bar, 
         public config: any
     ) {
-        this.foo.log(config);
+        console.log(this.foo.getValue());
+        console.log(this.bar.prop);
     }
 }
 
 /* Next, we will 'wire' the services. */
 
 container.register(Foo);
-container.register(MyClass, [Foo, { myvar: 69 }]); 
+container.register(MyClass, [
+    Foo,            // Inject Foo as shared service
+    new Bar,        // Inject new Bar as non-shared service
+    { myvar: 69 }   // Inject miscellaneous props
+]); 
 
 /* Get the `MyClass` instance */
 const myInstance = container.get(MyClass); 

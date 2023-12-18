@@ -1,5 +1,5 @@
-import { ClassType, Dependencies, Dependency } from ".";
-import { Injectable } from "./Injectable";
+import { ClassType, Dependencies, SharedDep } from ".";
+import { Injectable, InjectableType } from "./Injectable";
 
 /**
  * Very minimal Dependency Injection container. 
@@ -9,9 +9,9 @@ import { Injectable } from "./Injectable";
  * 
  * https://www.baeldung.com/cs/dependency-injection-vs-service-locator
  */
-export class Container implements Injectable<any> {
+export class Container implements Injectable {
 
-    config: undefined;
+    __inject: InjectableType.SHARED;
 
     private services        = new Map<ClassType<any>, any>();
     private dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
@@ -21,7 +21,7 @@ export class Container implements Injectable<any> {
     }
 
     /** Register a class as a shared service */
-    register<T extends ClassType<any>>(
+    register<T extends ClassType<Injectable>>(
         ctor: T, 
         dependencies: Dependencies<T> = [] as Dependencies<T>
     ) {
@@ -55,7 +55,7 @@ export class Container implements Injectable<any> {
     }
 
     /** Create an instance with injected dependencies */
-    private createInstance<T extends Injectable>(ctor: Dependency<T>): T {
+    private createInstance<T extends Injectable>(ctor: SharedDep<T>): T {
 
         /* Resolve dependencies */
         const depsCtors = this.dependencies.get(ctor) || [];

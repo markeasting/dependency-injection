@@ -1,17 +1,29 @@
 import { expect, test } from "bun:test";
-import { Container, Injectable, ServiceNotFoundError } from ".";
+import { Container, Injectable, InjectableType, ServiceNotFoundError, assert } from ".";
 
-const TEST_VALUE = 69;
+const TEST_VALUE1 = 69;
+const TEST_VALUE2 = 42;
 
-class MyModule implements Injectable {
-    config: any;
-    getValue() { return TEST_VALUE }
+class MyService implements Injectable {
+    __inject: InjectableType.SHARED;
+    getValue1() { return TEST_VALUE1 }
+}
+
+class MyNonSharedService implements Injectable {
+    __inject: InjectableType.NEW_INSTANCE;
+    getValue2() { return TEST_VALUE2 }
 }
 
 class MyClass implements Injectable {
-    config: any;
-    constructor(private dep: MyModule) {}
-    testDep() { return this.dep.getValue() }
+    __inject: InjectableType.SHARED;
+    constructor(
+        public dep: MyService,
+        public nonSharedDep: MyNonSharedService,
+    ) {
+        // assert(dep, nonSharedDep);
+    }
+    testDep1() { return this.dep.getValue1() }
+    testDep2() { return this.nonSharedDep.getValue2() }
 }
 
 test('Container:construct()', () => {
@@ -22,12 +34,12 @@ test('Container:construct()', () => {
 test('Container:register()', () => {
     const container = new Container();
 
-    container.register(MyModule);
+    container.register(MyService);
 
-    expect(container.get(MyModule)).toEqual(new MyModule);
+    expect(container.get(MyService)).toEqual(new MyService);
 });
 
-test('Get a simple instance from the container', () => {
+test('Container:get() - zero dependencies', () => {
     const container = new Container();
 
     container.register(MyClass);
@@ -37,28 +49,45 @@ test('Get a simple instance from the container', () => {
     expect(instance).toBeInstanceOf(MyClass);
 });
 
-test('Throw if class is not registered', () => {
+test('Container:get() - non-shared instance', () => {
+    const container = new Container();
+
+    container.register(MyNonSharedService);
+
+    const instance = container.get(MyNonSharedService);
+
+    expect(instance).toBeInstanceOf(MyNonSharedService);
+});
+
+test('Container:get() - throw if service is not registered', () => {
     const container = new Container();
 
     // container.register(MyModule); // This would normally be required
-    container.register(MyClass, [MyModule]);
+    container.register(MyClass, [MyService, new MyNonSharedService]);
 
     // Check if container throws: MyModule wasn't registered
-    expect(() => { container.get(MyModule) }).toThrow(new ServiceNotFoundError(MyModule));
+    expect(() => { container.get(MyService) }).toThrow(
+        new ServiceNotFoundError(MyService)
+    );
     
     // Check if container throws: Cannot find `MyModule` when resolving MyClass
-    expect(() => { container.get(MyClass) }).toThrow(new ServiceNotFoundError(MyModule)); 
+    expect(() => { container.get(MyClass) }).toThrow(
+        new ServiceNotFoundError(MyService)
+    );
 });
 
-test('Inject dependencies', () => {
+test('Container:get() - inject deps', () => {
     const container = new Container();
 
-    container.register(MyModule);
-    container.register(MyClass, [MyModule]);
+    container.register(MyService);
+    container.register(MyClass, [MyService, new MyNonSharedService]);
 
     const instance = container.get(MyClass);
     
     expect(instance).not.toBeUndefined();
-    expect(instance.testDep()).toEqual(TEST_VALUE);
+    expect(instance.dep).not.toBeUndefined();
+    expect(instance.nonSharedDep).not.toBeUndefined();
+    expect(instance.testDep1()).toEqual(TEST_VALUE1);
+    expect(instance.testDep2()).toEqual(TEST_VALUE2);
 });
 
