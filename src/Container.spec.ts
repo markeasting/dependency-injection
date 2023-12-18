@@ -11,7 +11,7 @@ class MyService implements Injectable {
 }
 
 class MyNonSharedService implements Injectable {
-    __inject: InjectableType.NEW_INSTANCE;
+    __inject: InjectableType.TRANSIENT;
     getValue2() { return TEST_VALUE2 }
 }
 

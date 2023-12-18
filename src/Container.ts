@@ -1,5 +1,4 @@
-import { ClassType, Dependencies } from ".";
-import { Injectable, InjectableType } from "./Injectable";
+import { ClassType, Dependencies, Injectable, InjectableType } from ".";
 
 /**
  * Very minimal Dependency Injection container. 

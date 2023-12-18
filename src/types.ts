@@ -1,4 +1,20 @@
-import { Injectable, InjectableType } from ".";
+/**
+ * - SHARED - the same instance will be returned for each injection
+ * - TRANSIENT - a new instance of the class must be constructed each time
+ */
+export enum InjectableType {
+    SHARED = 'SHARED',
+    TRANSIENT = 'TRANSIENT'
+}
+
+/**
+ * The DI {@link Container} will resolve anything with this interface.
+ * 
+ * This interface enables the usage of {@link ClassType} in the `register()` and `get()` methods. 
+ */
+export interface Injectable {
+    __inject: InjectableType;
+}
 
 /** The 'name' of a class, rather than an instance. E.g. `MyClass` instead of `new MyClass()` */
 export type ClassType<T> = { new (...args: any[]): T };
