@@ -42,7 +42,7 @@ test('Container:construct()', () => {
 test('Container:register()', () => {
     const container = new Container();
 
-    container.register(MyService);
+    container.register(MyService, []);
     container.build();
 
     expect(container.get(MyService)).toEqual(new MyService);
@@ -51,10 +51,10 @@ test('Container:register()', () => {
 test('Container:get() - zero dependencies', () => {
     const container = new Container();
 
-    container.register(MyClass);
+    container.register(MyService, []);
     container.build();
 
-    const instance = container.get(MyClass);
+    const instance = container.get(MyService);
 
     expect(instance).toBeInstanceOf(MyClass);
 });
@@ -62,7 +62,7 @@ test('Container:get() - zero dependencies', () => {
 test('Container:get() - non-shared instance', () => {
     const container = new Container();
 
-    container.register(MyNonSharedService);
+    container.register(MyNonSharedService, []);
     container.build();
 
     const instance = container.get(MyNonSharedService);
@@ -95,7 +95,7 @@ test('Container:get() - inject deps', () => {
 
     const config = new MyClassConfig();
 
-    container.register(MyService);
+    container.register(MyService, []);
     container.register(MyClass, [MyService, new MyNonSharedService, config]);
     container.build();
 
@@ -119,7 +119,7 @@ test('Container:get() - override', () => {
         extraMethod() { return TEST_VALUE3; }
     }
 
-    container.register(MyService);
+    container.register(MyService, []);
     container.register(MyClass, [MyService, new MyNonSharedService, config]);
 
     container.override(MyClass, OverrideClass); // Optionally, you can also override deps
@@ -147,7 +147,7 @@ test('Container:get() - throw if build was called before override', () => {
 
     // Check if container throws: cannot override if build() was called
     expect(() => { 
-        container.register(MyService);
+        container.register(MyService, []);
         container.build();
 
         container.override(MyClass, OverrideClass);

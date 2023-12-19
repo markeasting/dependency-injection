@@ -26,7 +26,7 @@ export class Container implements Injectable {
     /** Register a class as a shared service */
     public register<T extends ClassType<Injectable>>(
         ctor: T, 
-        dependencies: Dependencies<T> = [] as Dependencies<T>
+        dependencies: Dependencies<T>
     ) {
 
         const deps = dependencies as any[];
