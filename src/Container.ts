@@ -3,8 +3,11 @@ import { BundleConfigType, BundleInterface, ClassType, Dependencies, Injectable,
 /**
  * Very minimal Dependency Injection container. 
  * 
- * In the past, static classes / globals / singletons caused lots of 'spaghetti' (e.g. hidden or cyclical dependencies).
- * The main point of this container is to expose the dependencies of (sub)systems more explicitely. 
+ * In the past, static classes / globals / singletons caused 
+ * lots of 'spaghetti' (e.g. hidden or cyclical dependencies).
+ * 
+ * The main point of this container is to expose the dependencies 
+ * of (sub)systems more explicitely. 
  * 
  * https://www.baeldung.com/cs/dependency-injection-vs-service-locator
  */
@@ -12,10 +15,13 @@ export class Container implements Injectable {
 
     __inject: InjectableType.SHARED;
 
-    private overides        = new Map<ClassType<any>, ClassType<any>>();
+    private extensions      = new Map<ClassType<any>, BundleInterface<any>>();
+    private configs         = new Map<ClassType<any>, any>();
+    private _extTypeMap     = new Map<string, ClassType<BundleInterface<any>>>();
+
     private dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
     private services        = new Map<ClassType<any>, any>();
-    private configs         = new Map<ClassType<BundleInterface<any>>, any>();
+    private overides        = new Map<ClassType<any>, ClassType<any>>();
 
     private compiled = false;
 
@@ -39,7 +45,10 @@ export class Container implements Injectable {
         this.dependencies.set(ctor, deps);
     }
 
-    /** Apply bundle configuration */
+    /** 
+     * Apply an extension configuration. 
+     * See {@link addExtension()} and {@link BundleInterface}. 
+     */
     public configure<T extends BundleInterface<any>>(
         bundle: ClassType<T>, 
         config: BundleConfigType<T>
@@ -47,26 +56,48 @@ export class Container implements Injectable {
         this.configs.set(bundle, config);
     }
 
-    /** Configure bundles and apply implementation overrides if they were set via {@link override()} */
-    public build(bundles: Record<string, ClassType<BundleInterface<any>>> = {}) {
+    /** 
+     * Add an extension bundle to the container. 
+     * Bundles can be configured via {@link configure()} 
+     */
+    public addExtension<T extends BundleInterface<any>>(bundleCtor: ClassType<T>) {
+        this.extensions.set(bundleCtor, new bundleCtor());
+        this._extTypeMap.set(bundleCtor.name, bundleCtor);
+    }
+    
+    /** 
+     * Get an extension bundle from the container. 
+     */
+    public getExtension<T extends BundleInterface<any>>(bundle: ClassType<T> | string) {
+        const ctor = this._extTypeMap.get(
+            typeof bundle === 'string' ? bundle : bundle.name
+        );
+
+        return ctor ? this.get(ctor) as T : undefined;
+    }
+
+    /** 
+     * Resolves the container. 
+     * 
+     * - Configures bundles, see {@link addExtension()} and {@link configure()}
+     * - Applies implementation overrides, see {@link override()} 
+     */
+    public build() {
         this.compiled = true;
 
         this.overides.forEach((impl, key) => {
             this.services.set(key, this.createInstance(impl));
         });
 
-        for (const key in bundles) {
-            const Bundle = bundles[key];
-            const bundleinstance = new Bundle();
-            const config = this.configs.get(Bundle);
-
-            bundleinstance.configure(config);
+        for (const [key, Bundle] of this.extensions) {
+            const config = this.configs.get(key);
+            Bundle.configure(config);
         }
     }
 
     /** 
      * Override a service with another concrete implementation. 
-     * You may omit 'dependencies' to use the same dependencies as the overridden class. 
+     * You may omit 'dependencies' to match the deps of the overridden class. 
      */
     public override<T extends ClassType<Injectable>>(
         ctor: T,
@@ -90,14 +121,18 @@ export class Container implements Injectable {
     }
 
     /** 
-     * Get a shared service from the container - dependencies will be resolved 
-     * @TODO currently, this also returns transients services if requested. Will be fixed at some point. 
+     * Get a service from the container with resolved dependencies 
+     * @TODO currently, this also returns transients services if requested. 
+     * Will be fixed at some point. 
      */
     public get<T extends object>(ctor: ClassType<T>): T {
         return this.resolve(ctor as ClassType<Injectable>, true) as T;
     }
 
-    /** Resolve an instance of the given class */
+    /** 
+     * Resolve an instance of the given class. 
+     * In strict mode, will throw {@link ServiceNotFoundError}
+     */
     public resolve<T extends Injectable>(ctor: ClassType<T>, strict = true): T|undefined {
         if (!this.compiled) {
             throw new ContainerNotResolvedError();
@@ -114,7 +149,9 @@ export class Container implements Injectable {
             throw new ServiceNotFoundError(ctor);
     }
 
-    /** Create an instance with injected dependencies */
+    /** 
+     * Create a new service instance and inject dependencies 
+     */
     private createInstance<T extends Injectable>(ctor: ClassType<T>): T {
 
         /* Resolve dependencies */
@@ -133,7 +170,7 @@ export class Container implements Injectable {
 
 export class ContainerNotResolvedError extends Error {
     constructor() {
-        super('Container is has overrides. Try using container.build() first.');
+        super('Container must be resolved first. Try using container.build() first.');
     }
 }
 
