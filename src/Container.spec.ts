@@ -56,7 +56,7 @@ test('Container:get() - zero dependencies', () => {
 
     const instance = container.get(MyService);
 
-    expect(instance).toBeInstanceOf(MyClass);
+    expect(instance).toBeInstanceOf(MyService);
 });
 
 test('Container:get() - non-shared instance', () => {
