@@ -56,9 +56,9 @@ export class Container implements Injectable {
         });
 
         for (const key in bundles) {
-            const bundle = bundles[key];
-            const bundleinstance = new bundles[key];
-            const config = this.configs.get(bundle);
+            const Bundle = bundles[key];
+            const bundleinstance = new Bundle();
+            const config = this.configs.get(Bundle);
 
             bundleinstance.configure(config);
         }
