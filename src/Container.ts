@@ -1,4 +1,6 @@
-import { BundleConfigType, BundleInterface, ClassType, Dependencies, Injectable, InjectableType } from ".";
+import { CompilerOverrideUserError, ContainerNotResolvedError, ServiceNotFoundError } from "./errors";
+
+import type { Injectable, InjectableType, ClassType, Dependencies } from './types';
 
 /**
  * Very minimal Dependency Injection container. 
@@ -15,15 +17,11 @@ export class Container implements Injectable {
 
     __inject: InjectableType.SHARED;
 
-    private extensions      = new Map<ClassType<any>, BundleInterface<any>>();
-    private configs         = new Map<ClassType<any>, any>();
-    private _extTypeMap     = new Map<string, ClassType<BundleInterface<any>>>();
+    protected dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
+    protected services        = new Map<ClassType<any>, any>();
+    protected overides        = new Map<ClassType<any>, ClassType<any>>();
 
-    private dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
-    private services        = new Map<ClassType<any>, any>();
-    private overides        = new Map<ClassType<any>, ClassType<any>>();
-
-    private compiled = false;
+    protected compiled = false;
 
     constructor() {
         this.services.set(Container, this);
@@ -46,40 +44,8 @@ export class Container implements Injectable {
     }
 
     /** 
-     * Apply an extension configuration. 
-     * See {@link addExtension()} and {@link BundleInterface}. 
-     */
-    public configure<T extends BundleInterface<any>>(
-        bundle: ClassType<T>, 
-        config: BundleConfigType<T>
-    ) {
-        this.configs.set(bundle, config);
-    }
-
-    /** 
-     * Add an extension bundle to the container. 
-     * Bundles can be configured via {@link configure()} 
-     */
-    public addExtension<T extends BundleInterface<any>>(bundleCtor: ClassType<T>) {
-        this.extensions.set(bundleCtor, new bundleCtor());
-        this._extTypeMap.set(bundleCtor.name, bundleCtor);
-    }
-    
-    /** 
-     * Get an extension bundle from the container. 
-     */
-    public getExtension<T extends BundleInterface<any>>(bundle: ClassType<T> | string) {
-        const ctor = this._extTypeMap.get(
-            typeof bundle === 'string' ? bundle : bundle.name
-        );
-
-        return ctor ? this.get(ctor) as T : undefined;
-    }
-
-    /** 
      * Resolves the container. 
      * 
-     * - Configures bundles, see {@link addExtension()} and {@link configure()}
      * - Applies implementation overrides, see {@link override()} 
      */
     public build() {
@@ -88,11 +54,6 @@ export class Container implements Injectable {
         this.overides.forEach((impl, key) => {
             this.services.set(key, this.createInstance(impl));
         });
-
-        for (const [key, Bundle] of this.extensions) {
-            const config = this.configs.get(key);
-            Bundle.configure(config);
-        }
     }
 
     /** 
@@ -168,20 +129,3 @@ export class Container implements Injectable {
 //     }
 // };
 
-export class ContainerNotResolvedError extends Error {
-    constructor() {
-        super('Container must be resolved first. Try using container.build() first.');
-    }
-}
-
-export class CompilerOverrideUserError extends Error {
-    constructor() {
-        super('Container was already compiled. You can only call override() before build().');
-    }
-}
-
-export class ServiceNotFoundError extends Error {
-    constructor(ctor: ClassType<any>) {
-        super(`'${ctor.name}' is not a registered service. Did you forget to call 'container.register(${ctor.name})'? Or did you forget to load a bundle?`);
-    }
-};
