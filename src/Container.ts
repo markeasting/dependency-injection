@@ -10,12 +10,13 @@ import type { Injectable, InjectableType, ClassType, Dependencies } from './type
  * 
  * The main point of this container is to expose the dependencies 
  * of (sub)systems more explicitely. 
- * 
- * https://www.baeldung.com/cs/dependency-injection-vs-service-locator
  */
 export class Container implements Injectable {
 
     __inject: InjectableType.SHARED;
+
+    /** Can be used for application globals / config. */
+    protected parameters: Record<string, any> = {};
 
     protected dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
     protected services        = new Map<ClassType<any>, any>();
@@ -27,7 +28,17 @@ export class Container implements Injectable {
         this.services.set(Container, this);
     }
 
-    /** Register a class as a shared service */
+    /** See {@link parameters}. */
+    public setParameter(key: string, value: any) {
+        this.parameters[key] = value;
+    }
+
+    /** See {@link parameters}. */
+    public getParameter(key: string) {
+        return this.parameters[key];
+    }
+
+    /** Registers an {@link Injectable} class as a service. */
     public register<T extends ClassType<Injectable>>(
         ctor: T, 
         dependencies: Dependencies<T>
@@ -46,7 +57,7 @@ export class Container implements Injectable {
     /** 
      * Resolves the container. 
      * 
-     * - Applies implementation overrides, see {@link override()} 
+     * Also applies implementation overrides that were set via {@link override()}.
      */
     public build() {
         this.compiled = true;
@@ -57,8 +68,10 @@ export class Container implements Injectable {
     }
 
     /** 
-     * Override a service with another concrete implementation. 
-     * You may omit 'dependencies' to match the deps of the overridden class. 
+     * Overrides a service with another concrete implementation. 
+     * 
+     * You may omit the 'dependencies' argument to match the 
+     * constructor signature of the overridden class. 
      */
     public override<T extends ClassType<Injectable>>(
         ctor: T,
@@ -82,17 +95,22 @@ export class Container implements Injectable {
     }
 
     /** 
-     * Get a service from the container with resolved dependencies 
+     * Retrieves a service from the container with resolved dependencies. 
+     * 
+     * Will throw a {@link ServiceNotFoundError} if the service was not registered
+     * via {@link register()}.
+     * 
      * @TODO currently, this also returns transients services if requested. 
-     * Will be fixed at some point. 
+     * Will be fixed at some point. But who knows!
      */
     public get<T extends object>(ctor: ClassType<T>): T {
         return this.resolve(ctor as ClassType<Injectable>, true) as T;
     }
 
     /** 
-     * Resolve an instance of the given class. 
-     * In strict mode, will throw {@link ServiceNotFoundError}
+     * Resolves an instance of the given class. 
+     * 
+     * In strict mode, will throw a {@link ServiceNotFoundError}.
      */
     public resolve<T extends Injectable>(ctor: ClassType<T>, strict = true): T|undefined {
         if (!this.compiled) {
@@ -111,7 +129,7 @@ export class Container implements Injectable {
     }
 
     /** 
-     * Create a new service instance and inject dependencies 
+     * Creates a new instance of a service and resolves/injects it's dependencies.
      */
     private createInstance<T extends Injectable>(ctor: ClassType<T>): T {
 
@@ -122,10 +140,3 @@ export class Container implements Injectable {
         return new ctor(...depsInstances);
     }
 }
-
-// export class MissingBundleConfigurationError extends Error {
-//     constructor(ctor: ClassType<any>) {
-//         super(`'${ctor.name}' is registered as a bundle, but no static 'configure' method was found.`);
-//     }
-// };
-
