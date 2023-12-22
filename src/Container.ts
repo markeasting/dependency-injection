@@ -57,7 +57,8 @@ export class Container implements Injectable {
     /** 
      * Resolves the container. 
      * 
-     * Also applies implementation overrides that were set via {@link override()}.
+     * Also applies implementation overrides that were set 
+     * via {@link override()}.
      */
     public build() {
         this.compiled = true;
@@ -97,8 +98,8 @@ export class Container implements Injectable {
     /** 
      * Retrieves a service from the container with resolved dependencies. 
      * 
-     * Will throw a {@link ServiceNotFoundError} if the service was not registered
-     * via {@link register()}.
+     * Will throw a {@link ServiceNotFoundError} if the service was not 
+     * registered via {@link register()}.
      * 
      * @TODO currently, this also returns transients services if requested. 
      * Will be fixed at some point. But who knows!
@@ -112,18 +113,26 @@ export class Container implements Injectable {
      * 
      * In strict mode, will throw a {@link ServiceNotFoundError}.
      */
-    public resolve<T extends Injectable>(ctor: ClassType<T>, strict = true): T|undefined {
+    public resolve<T extends Injectable>(
+        ctor: ClassType<T>, 
+        strict = true
+    ): T|undefined {
+        
         if (!this.compiled) {
             throw new ContainerNotResolvedError();
         }
+
         if (this.services.has(ctor)) {
             let instance = this.services.get(ctor);
+            
             if (!instance) {
                 instance = this.createInstance(ctor);
                 this.services.set(ctor, instance);
             }
+
             return instance;
         }
+        
         if (strict)
             throw new ServiceNotFoundError(ctor);
     }

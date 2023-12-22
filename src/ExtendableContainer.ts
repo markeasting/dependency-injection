@@ -22,10 +22,10 @@ export class ExtendableContainer extends Container {
      * See also: {@link addExtension()}. 
      */
     public configure<T extends BundleInterface<any>>(
-        bundle: ClassType<T>, 
+        bundleCtor: ClassType<T>, 
         config: BundleConfigType<T>
     ) {
-        this.extensionConfig.set(bundle, config);
+        this.extensionConfig.set(bundleCtor, config);
     }
 
     /** 
@@ -35,7 +35,9 @@ export class ExtendableContainer extends Container {
      * 
      * See also: {@link BundleInterface}.
      */
-    public addExtension<T extends BundleInterface<any>>(bundleCtor: ClassType<T>) {
+    public addExtension<T extends BundleInterface<any>>(
+        bundleCtor: ClassType<T>
+    ) {
         this.extensions.set(bundleCtor, new bundleCtor());
         this.#extTypeMap.set(bundleCtor.name, bundleCtor);
     }
@@ -43,7 +45,9 @@ export class ExtendableContainer extends Container {
     /** 
      * Retrieves an extension bundle from the container. 
      */
-    public getExtension<T extends BundleInterface<any>>(bundle: ClassType<T> | string) {
+    public getExtension<T extends BundleInterface<any>>(
+        bundle: ClassType<T> | string
+    ) {
         const ctor = this.#extTypeMap.get(
             typeof bundle === 'string' ? bundle : bundle.name
         );
