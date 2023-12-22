@@ -1,9 +1,13 @@
 /**
- * - SHARED - the same instance will be returned for each injection
- * - TRANSIENT - a new instance of the class must be constructed each time
+ * - SHARED - the same instance will be passed when injected into a class.
+ * - TRANSIENT - a new instance of the class must be constructed each time.
  */
 export enum InjectableType {
+
+    /** The same instance will be passed when injected into a class. */
     SHARED = 'SHARED',
+
+    /** A new instance of the class must be constructed each time. */
     TRANSIENT = 'TRANSIENT'
 }
 
@@ -18,14 +22,19 @@ export interface Injectable {
     // configure?(config: any): void;
 }
 
-/** The 'name' of a class, rather than an instance. E.g. `MyClass` instead of `new MyClass()` */
+/** The 'name' of a class, rather than an instance. E.g. `MyClass` instead of `new MyClass()`. */
 export type ClassType<T> = { new (...args: any[]): T };
 
+/**
+ * Interface for extension bundles. 
+ * You may define your own configuration object. 
+ */
 export interface BundleInterface<T extends object> extends Injectable {
     config: T;
     configure(config: T): void;
 }
 
+/** Maps the correct configuration type hints from a given BundleInterface. */
 export type BundleConfigType<T> = T extends BundleInterface<infer X> ? X : never;
 
 // type GenericOf<T> = T extends Injectable<infer X> ? X : never;
@@ -42,7 +51,7 @@ type MapToClassType<T> = {
 };
 
 /**
- * Get the dependency types of a class from it's constructor parameters.
+ * Get the dependency types of a class, based on it's constructor parameters.
  */
 export type Dependencies<T extends ClassType<any>> 
     = MapToClassType<ConstructorParameters<T>>
