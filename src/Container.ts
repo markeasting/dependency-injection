@@ -34,8 +34,8 @@ export class Container implements Injectable {
     }
 
     /** See {@link parameters}. */
-    public getParameter(key: string) {
-        return this.parameters[key];
+    public getParameter<T = any>(key: string) {
+        return this.parameters[key] as T;
     }
 
     /** Registers an {@link Injectable} class as a service. */
