@@ -50,7 +50,7 @@ type MapDependencies<T> = {
         IsInjectable<T[P]> extends Injectable
             ? GetInjectableType<T[P]> extends InjectableType.SHARED 
                 ? DependsOn<T[P]> 
-                : T[P]
+                : T[P] | DependsOn<T[P]>
             : T[P]
 };
 

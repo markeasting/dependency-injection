@@ -1,6 +1,6 @@
-import { CompilerOverrideUserError, ContainerNotResolvedError, ServiceNotFoundError } from "./errors";
+import { ContainerOverrideUserError, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError } from "./errors";
 
-import type { Injectable, InjectableType, ClassType, Dependencies } from './types';
+import { Injectable, InjectableType, ClassType, Dependencies } from './types';
 
 /**
  * Very minimal Dependency Injection container. 
@@ -22,6 +22,8 @@ export class Container implements Injectable {
     protected services        = new Map<ClassType<any>, any>();
     protected overides        = new Map<ClassType<any>, ClassType<any>>();
 
+    #serviceLifetimes         = new Map<ClassType<any>, InjectableType>();
+
     protected compiled = false;
 
     constructor() {
@@ -41,17 +43,19 @@ export class Container implements Injectable {
     /** Registers an {@link Injectable} class as a service. */
     public register<T extends ClassType<Injectable>>(
         ctor: T, 
-        dependencies: Dependencies<T>
+        dependencies: Dependencies<T>,
+        lifetime: InjectableType = InjectableType.SHARED
     ): void {
 
         const deps = dependencies as any[];
 
         if (deps.includes(ctor)) {
-            throw new Error(`Cyclical dependency for ${ctor.name}`);
+            throw new CyclicalDependencyError(ctor);
         }
 
         this.services.set(ctor, null);
         this.dependencies.set(ctor, deps);
+        this.#serviceLifetimes.set(ctor, lifetime);
     }
 
     /** 
@@ -80,7 +84,7 @@ export class Container implements Injectable {
         dependencies?: Dependencies<T>
     ): void {
         if (this.compiled) {
-            throw new CompilerOverrideUserError;
+            throw new ContainerOverrideUserError;
         }
         this.services.set(ctor, null);
         this.overides.set(ctor, overrideCtor);
@@ -100,9 +104,6 @@ export class Container implements Injectable {
      * 
      * Will throw a {@link ServiceNotFoundError} if the service was not 
      * registered via {@link register()}.
-     * 
-     * @TODO currently, this also returns transients services if requested. 
-     * Will be fixed at some point. But who knows!
      */
     public get<T extends object>(ctor: ClassType<T>): T {
         return this.resolve(ctor as ClassType<Injectable>, true) as T;
@@ -121,15 +122,24 @@ export class Container implements Injectable {
             throw new ContainerNotResolvedError();
         }
 
-        if (this.services.has(ctor)) {
-            let instance = this.services.get(ctor);
-            
-            if (!instance) {
-                instance = this.createInstance(ctor);
-                this.services.set(ctor, instance);
-            }
+        const type = this.#serviceLifetimes.get(ctor) || InjectableType.SHARED;
 
-            return instance;
+        if (type == InjectableType.SHARED) {
+            if (this.services.has(ctor)) {
+        
+                let instance = this.services.get(ctor);
+                
+                if (!instance) {
+                    instance = this.createInstance(ctor);
+                    this.services.set(ctor, instance);
+                }
+
+                return instance;
+            }
+        } else {
+            if (this.services.has(ctor)) {
+                return this.createInstance(ctor);
+            }
         }
         
         if (strict)

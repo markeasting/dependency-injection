@@ -1,12 +1,18 @@
 import { ClassType } from ".";
 
+export class CyclicalDependencyError extends Error {
+    constructor(ctor: ClassType<any>) {
+        super(`Cyclical dependency for ${ctor.name}`);
+    }
+}
+
 export class ContainerNotResolvedError extends Error {
     constructor() {
         super('Container must be resolved first. Try using container.build() first.');
     }
 }
 
-export class CompilerOverrideUserError extends Error {
+export class ContainerOverrideUserError extends Error {
     constructor() {
         super('Container was already compiled. You can only call override() before build().');
     }
