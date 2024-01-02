@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { CompilerOverrideUserError, Container, Injectable, InjectableType, ServiceNotFoundError, assert } from "../src";
+import { ContainerOverrideUserError, Container, ContainerNotResolvedError, CyclicalDependencyError, Injectable, InjectableType, ServiceNotFoundError, assert } from "../src";
 
 const TEST_VALUE1 = 69;
 const TEST_VALUE2 = 42;
@@ -48,6 +48,21 @@ test('Container:register()', () => {
     expect(container.get(MyService)).toEqual(new MyService);
 });
 
+test('Container:register() - throw if cyclical dependency was found', () => {
+    const container = new Container();
+
+    class BadService implements Injectable {
+        __inject: InjectableType.SHARED;
+        constructor(private selfReference: BadService) {}
+    }
+
+    expect(() => { 
+        container.register(BadService, [BadService]); 
+    }).toThrow(
+        new CyclicalDependencyError(BadService)
+    );
+});
+
 test('Container:get() - zero dependencies', () => {
     const container = new Container();
 
@@ -59,7 +74,19 @@ test('Container:get() - zero dependencies', () => {
     expect(instance).toBeInstanceOf(MyService);
 });
 
-test('Container:get() - non-shared instance', () => {
+test('Container:get() - type:shared', () => {
+    const container = new Container();
+
+    container.register(MyService, []);
+    container.build();
+
+    const instance1 = container.get(MyService);
+    const instance2 = container.get(MyService);
+
+    expect(instance1).toStrictEqual(instance2);
+});
+
+test('Container:get() - type:transient', () => {
     const container = new Container();
 
     container.register(MyNonSharedService, []);
@@ -70,22 +97,74 @@ test('Container:get() - non-shared instance', () => {
     expect(instance).toBeInstanceOf(MyNonSharedService);
 });
 
+test('Container:get() - transients with shared deps', () => {
+
+    class MainClass implements Injectable {
+        __inject: InjectableType.SHARED;
+    }
+
+    class RandomGenerator implements Injectable {
+        __inject: InjectableType.SHARED;
+        getValue() { 
+            return performance.now() * Math.random()
+        }
+    }
+
+    class TransientService implements Injectable {
+        __inject: InjectableType.TRANSIENT;
+        val: number;
+        constructor(
+            public rand: RandomGenerator
+        ) {
+            this.val = rand.getValue();
+        }
+    }
+
+    const container = new Container();
+    container.register(RandomGenerator, [], InjectableType.SHARED);
+    container.register(TransientService, [RandomGenerator], InjectableType.TRANSIENT);
+    container.build();
+
+    const instance1 = container.get(TransientService);
+    const instance2 = container.get(TransientService);
+
+    expect(instance1.rand).toStrictEqual(instance1.rand);
+    expect(instance1.val).not.toEqual(instance2.val);
+})
+
+
+test('Container:get() - throw if build was called before get', () => {
+    const container = new Container();
+
+    container.register(MyService, []);
+    // container.build(); // Normally required here
+
+    // Check if container throws: cannot get() before/without build()
+    expect(() => { 
+        container.get(MyService);
+    }).toThrow(
+        new ContainerNotResolvedError()
+    );
+});
+
 test('Container:get() - throw if service is not registered', () => {
     const container = new Container();
 
-    const config = new MyClassConfig();
-
-    // container.register(MyModule); // This would normally be required
-    container.register(MyClass, [MyService, new MyNonSharedService, config]);
+    // container.register(MyNonSharedService, []); // This would normally be required
+    container.register(MyClass, [MyService, MyNonSharedService, new MyClassConfig()]);
     container.build();
 
     // Check if container throws: MyModule wasn't registered
-    expect(() => { container.get(MyService) }).toThrow(
+    expect(() => { 
+        container.get(MyService) 
+    }).toThrow(
         new ServiceNotFoundError(MyService)
     );
     
     // Check if container throws: Cannot find `MyModule` when resolving MyClass
-    expect(() => { container.get(MyClass) }).toThrow(
+    expect(() => { 
+        container.get(MyClass) 
+    }).toThrow(
         new ServiceNotFoundError(MyService)
     );
 });
@@ -96,7 +175,8 @@ test('Container:get() - inject deps', () => {
     const config = new MyClassConfig();
 
     container.register(MyService, []);
-    container.register(MyClass, [MyService, new MyNonSharedService, config]);
+    container.register(MyNonSharedService, []);
+    container.register(MyClass, [MyService, MyNonSharedService, config]);
     container.build();
 
     const instance = container.get(MyClass);
@@ -152,7 +232,7 @@ test('Container:get() - throw if build was called before override', () => {
 
         container.override(MyClass, OverrideClass);
     }).toThrow(
-        new CompilerOverrideUserError()
+        new ContainerOverrideUserError()
     );
 });
 
