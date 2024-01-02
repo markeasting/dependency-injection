@@ -43,7 +43,7 @@ export class ExtendableContainer extends Container {
             typeof bundle === 'string' ? bundle : bundle.name
         );
 
-        return ctor ? this.get(ctor) as T : undefined;
+        return ctor ? this.resolve(ctor, false) as T : undefined;
     }
 
     /** 
