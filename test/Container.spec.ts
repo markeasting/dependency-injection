@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { ContainerOverrideUserError, Container, ContainerNotResolvedError, CyclicalDependencyError, InjectableType, ServiceNotFoundError, assert } from "../src";
+import { ContainerOverrideUserError, Container, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError, assert } from "../src";
 
 const TEST_VALUE1 = 69;
 const TEST_VALUE2 = 42;
@@ -31,11 +31,20 @@ class MyClass {
     testDep2() { return this.transient.getValue2() }
 }
 
-test('Container:construct()', () => {
+test('Container:construct() / self-register', () => {
     const container = new Container();
     container.build();
 
     expect(container.get(Container)).toStrictEqual(container);
+});
+
+test('Container:setParameter()', () => {
+    const container = new Container();
+    container.setParameter('myvar', TEST_VALUE1);
+    container.setParameter('someother', true);
+
+    expect(container.getParameter<number>('myvar')).toStrictEqual(TEST_VALUE1);
+    expect(container.getParameter<boolean>('someother')).toStrictEqual(true);
 });
 
 test('Container:register()', () => {
@@ -51,7 +60,6 @@ test('Container:register() - throw if cyclical dependency was found', () => {
     const container = new Container();
 
     class BadService {
-        static injectAs = InjectableType.SHARED;
         constructor(private selfReference: BadService) {}
     }
 
@@ -114,9 +122,6 @@ test('Container:get() - transients with shared deps', () => {
 
     class RandomGenerator  {
         counter: number = 0;
-
-        constructor() {
-        }
 
         getValue() { 
             this.counter++;
@@ -201,9 +206,8 @@ test('Container:get() - inject complex deps', () => {
 
     const instance = container.get(MyClass);
     
-    expect(instance).not.toBeUndefined();
-    expect(instance.dep).not.toBeUndefined();
-    expect(instance.transient).not.toBeUndefined();
+    expect(instance).toBeInstanceOf(MyClass);
+    expect(instance.transient).toBeInstanceOf(MyTransientService);
     expect(instance.config).toStrictEqual(config);
     expect(instance.testDep1()).toStrictEqual(TEST_VALUE1);
     expect(instance.testDep2()).toStrictEqual(TEST_VALUE2);
@@ -225,7 +229,7 @@ test('Container:get() - inject primitives', () => {
 
     const instance = container.get(Foo);
     
-    expect(instance).not.toBeUndefined();
+    expect(instance).toBeInstanceOf(Foo);
     expect(instance.obj.myvar).toStrictEqual(false);
     expect(instance.bool).toStrictEqual(true);
     expect(instance.num).toStrictEqual(TEST_VALUE1);
@@ -241,21 +245,22 @@ test('Container:get() - override', () => {
         extraMethod() { return TEST_VALUE3; }
     }
 
-    container.singleton(MyService, []);
-    container.transient(MyTransientService, []);
-    container.singleton(MyClass, [MyService, MyTransientService, config]);
+    class MyTransientOverride extends MyTransientService {}
 
-    container.override(MyClass, OverrideClass);
-    // container.override(MyClass, OverrideClass, [...]); // Optionally, you can also override deps
+    container.singleton(MyService, []);
+    container.transient(MyTransientOverride, []);
+    container.singleton(MyClass, [MyService, MyTransientOverride, config]);
+
+    // container.override(MyClass, OverrideClass); // Optionally, you may ommit deps
+    container.override(MyClass, OverrideClass, [MyService, MyTransientOverride, config]); 
 
     container.build();
 
     const instance = container.get(MyClass);
     
     expect(instance).toBeInstanceOf(OverrideClass);
-    expect(instance).not.toBeUndefined();
-    expect(instance.dep).not.toBeUndefined();
-    expect(instance.transient).not.toBeUndefined();
+    expect(instance.dep).toBeInstanceOf(MyService);
+    expect(instance.transient).toBeInstanceOf(MyTransientOverride);
     expect(instance.config).toStrictEqual(config);
     expect(instance.testDep1()).toStrictEqual(TEST_VALUE1);
     expect(instance.testDep2()).toStrictEqual(TEST_VALUE2);
@@ -263,8 +268,6 @@ test('Container:get() - override', () => {
 
 test('Container:get() - throw if build was called before override', () => {
     const container = new Container();
-
-    const config = new MyClassConfig();
 
     class OverrideClass extends MyClass {
         extraMethod() { return TEST_VALUE3; }
