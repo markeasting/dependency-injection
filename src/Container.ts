@@ -1,6 +1,6 @@
 import { ContainerOverrideUserError, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError } from "./errors";
 
-import { InjectableType, ClassType, Dependencies } from './types';
+import { Lifetime, ClassType, Dependencies } from './types';
 
 /**
  * Very minimal Dependency Injection container. 
@@ -20,9 +20,9 @@ export class Container {
     protected services        = new Map<ClassType<any>, any>();
     protected overides        = new Map<ClassType<any>, ClassType<any>>();
 
-    #serviceLifetimes         = new Map<ClassType<any>, InjectableType>();
+    #serviceLifetimes         = new Map<ClassType<any>, Lifetime>();
 
-    protected compiled = false;
+    #compiled = false;
 
     constructor() {
         this.services.set(Container, this);
@@ -42,7 +42,7 @@ export class Container {
     public register<T extends ClassType<any>>(
         ctor: T, 
         dependencies: Dependencies<T>,
-        lifetime: InjectableType = InjectableType.SHARED
+        lifetime: Lifetime = Lifetime.SHARED
     ): void {
 
         const deps = dependencies as any[];
@@ -61,7 +61,7 @@ export class Container {
         ctor: T, 
         dependencies: Dependencies<T>
     ): void {
-        this.register(ctor, dependencies, InjectableType.SHARED);
+        this.register(ctor, dependencies, Lifetime.SHARED);
     }
 
     /** Registers a class as a transient service. */
@@ -69,7 +69,7 @@ export class Container {
         ctor: T, 
         dependencies: Dependencies<T>
     ): void {
-        this.register(ctor, dependencies, InjectableType.TRANSIENT);
+        this.register(ctor, dependencies, Lifetime.TRANSIENT);
     }
 
     /** 
@@ -79,7 +79,7 @@ export class Container {
      * via {@link override()}.
      */
     public build(): void {
-        this.compiled = true;
+        this.#compiled = true;
 
         this.overides.forEach((impl, key) => {
             this.services.set(key, this.createInstance(impl));
@@ -97,7 +97,7 @@ export class Container {
         overrideCtor: T, 
         dependencies?: Dependencies<T>
     ): void {
-        if (this.compiled) {
+        if (this.#compiled) {
             throw new ContainerOverrideUserError;
         }
         this.services.set(ctor, null);
@@ -132,13 +132,13 @@ export class Container {
         ctor: ClassType<T>, 
         strict = true
     ): T|undefined {
-        if (!this.compiled) {
+        if (!this.#compiled) {
             throw new ContainerNotResolvedError();
         }
 
-        const type = this.#serviceLifetimes.get(ctor) || InjectableType.SHARED;
+        const type = this.#serviceLifetimes.get(ctor) || Lifetime.SHARED;
 
-        if (type == InjectableType.SHARED) {
+        if (type == Lifetime.SHARED) {
             if (this.services.has(ctor)) {
         
                 let instance = this.services.get(ctor);

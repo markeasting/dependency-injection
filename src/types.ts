@@ -1,5 +1,5 @@
 
-export enum InjectableType {
+export enum Lifetime {
 
     /** The same instance will be passed when injected into a class. */
     SHARED = 'SHARED',
