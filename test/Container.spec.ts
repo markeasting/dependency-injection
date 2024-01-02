@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { CompilerOverrideUserError, Container, Injectable, InjectableType, ServiceNotFoundError, assert } from ".";
+import { CompilerOverrideUserError, Container, Injectable, InjectableType, ServiceNotFoundError, assert } from "../src";
 
 const TEST_VALUE1 = 69;
 const TEST_VALUE2 = 42;
