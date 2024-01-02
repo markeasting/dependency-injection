@@ -48,7 +48,7 @@ export class ExtendableContainer extends Container {
     public getExtension<T extends BundleInterface<any>>(
         bundle: ClassType<T> | string
     ): T | undefined {
-        const ctor = this._extTypeMap.get(
+        const ctor = this.#extTypeMap.get(
             typeof bundle === 'string' ? bundle : bundle.name
         );
 
