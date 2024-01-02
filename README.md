@@ -11,8 +11,7 @@ Other DI solutions use decorators (which are experimental) or reflect-metadata (
 - Extension bundle system: easily create 'feature toggles' in your application
 
 ## Installation
-<!-- `npm install @wildsea/dependency-injection` -->
-For now, this package is not available on NPM just yet. For now, you can clone this repository and [link the local package](https://docs.npmjs.com/cli/v10/commands/npm-linkk) in your own project. 
+This package is not available on NPM just yet. For now, you can clone this repository and [link the local package](https://docs.npmjs.com/cli/v10/commands/npm-linkk) in your own project. 
 
 `npm link @wildsea/dependency-injection`
 
