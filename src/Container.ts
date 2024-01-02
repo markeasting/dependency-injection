@@ -31,7 +31,7 @@ export class Container implements Injectable {
     public register<T extends ClassType<Injectable>>(
         ctor: T, 
         dependencies: Dependencies<T>
-    ) {
+    ): void {
 
         const deps = dependencies as any[];
 
@@ -48,7 +48,7 @@ export class Container implements Injectable {
      * 
      * - Applies implementation overrides, see {@link override()} 
      */
-    public build() {
+    public build(): void {
         this.compiled = true;
 
         this.overides.forEach((impl, key) => {
@@ -64,7 +64,7 @@ export class Container implements Injectable {
         ctor: T,
         overrideCtor: T, 
         dependencies?: Dependencies<T>
-    ) {
+    ): void {
         if (this.compiled) {
             throw new CompilerOverrideUserError;
         }
@@ -94,7 +94,10 @@ export class Container implements Injectable {
      * Resolve an instance of the given class. 
      * In strict mode, will throw {@link ServiceNotFoundError}
      */
-    public resolve<T extends Injectable>(ctor: ClassType<T>, strict = true): T|undefined {
+    public resolve<T extends Injectable>(
+        ctor: ClassType<T>, 
+        strict = true
+    ): T|undefined {
         if (!this.compiled) {
             throw new ContainerNotResolvedError();
         }

@@ -22,7 +22,7 @@ export class ExtendableContainer extends Container {
     public configure<T extends BundleInterface<any>>(
         bundle: ClassType<T>, 
         config: BundleConfigType<T>
-    ) {
+    ): void {
         this.configs.set(bundle, config);
     }
 
@@ -30,7 +30,9 @@ export class ExtendableContainer extends Container {
      * Add an extension bundle to the container. 
      * Bundles can be configured via {@link configure()} 
      */
-    public addExtension<T extends BundleInterface<any>>(bundleCtor: ClassType<T>) {
+    public addExtension<T extends BundleInterface<any>>(
+        bundleCtor: ClassType<T>
+    ): void {
         this.extensions.set(bundleCtor, new bundleCtor());
         this._extTypeMap.set(bundleCtor.name, bundleCtor);
     }
@@ -38,7 +40,9 @@ export class ExtendableContainer extends Container {
     /** 
      * Get an extension bundle from the container. 
      */
-    public getExtension<T extends BundleInterface<any>>(bundle: ClassType<T> | string) {
+    public getExtension<T extends BundleInterface<any>>(
+        bundle: ClassType<T> | string
+    ): T | undefined {
         const ctor = this._extTypeMap.get(
             typeof bundle === 'string' ? bundle : bundle.name
         );
@@ -52,7 +56,7 @@ export class ExtendableContainer extends Container {
      * - Configures bundles, see {@link addExtension()} and {@link configure()}
      * - Applies implementation overrides, see {@link override()} 
      */
-    public build() {
+    public build(): void {
         super.build();
 
         for (const [key, Bundle] of this.extensions) {
