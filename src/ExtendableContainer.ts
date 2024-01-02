@@ -11,34 +11,39 @@ import type { ClassType, BundleInterface, BundleConfigType } from './types';
  */
 export class ExtendableContainer extends Container {
 
-    private extensions      = new Map<ClassType<any>, BundleInterface<any>>();
-    private configs         = new Map<ClassType<any>, any>();
-    private _extTypeMap     = new Map<string, ClassType<BundleInterface<any>>>();
+    protected extensions      = new Map<ClassType<any>, BundleInterface<any>>();
+    protected extensionConfig = new Map<ClassType<any>, any>();
+    
+    #extTypeMap = new Map<string, ClassType<BundleInterface<any>>>();
 
     /** 
-     * Apply an extension configuration. 
-     * See {@link addExtension()} and {@link BundleInterface}. 
+     * Configures a bundle with the given parameters. 
+     * 
+     * See also: {@link addExtension()}. 
      */
     public configure<T extends BundleInterface<any>>(
-        bundle: ClassType<T>, 
+        bundleCtor: ClassType<T>, 
         config: BundleConfigType<T>
-    ): void {
-        this.configs.set(bundle, config);
+    ) {
+        this.extensionConfig.set(bundleCtor, config);
     }
 
     /** 
      * Add an extension bundle to the container. 
-     * Bundles can be configured via {@link configure()} 
+     * 
+     * Bundles can be configured via {@link configure()}. 
+     * 
+     * See also: {@link BundleInterface}.
      */
     public addExtension<T extends BundleInterface<any>>(
         bundleCtor: ClassType<T>
     ): void {
         this.extensions.set(bundleCtor, new bundleCtor());
-        this._extTypeMap.set(bundleCtor.name, bundleCtor);
+        this.#extTypeMap.set(bundleCtor.name, bundleCtor);
     }
     
     /** 
-     * Get an extension bundle from the container. 
+     * Retrieves an extension bundle from the container. 
      */
     public getExtension<T extends BundleInterface<any>>(
         bundle: ClassType<T> | string
@@ -53,14 +58,15 @@ export class ExtendableContainer extends Container {
     /** 
      * Resolves the container. 
      * 
-     * - Configures bundles, see {@link addExtension()} and {@link configure()}
-     * - Applies implementation overrides, see {@link override()} 
+     * - Configures extension bundles (see {@link addExtension()}) 
+     *   and their configuration (see {@link configure()}).
+     * - Applies implementation overrides, see {@link override()}.
      */
     public build(): void {
         super.build();
 
         for (const [key, Bundle] of this.extensions) {
-            const config = this.configs.get(key);
+            const config = this.extensionConfig.get(key);
             Bundle.configure(config);
         }
     }
