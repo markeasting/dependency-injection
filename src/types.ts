@@ -8,17 +8,8 @@ export enum InjectableType {
     TRANSIENT = 'TRANSIENT'
 }
 
-/**
- * The DI {@link Container} will resolve classes that implement this interface.
- */
-export interface Injectable {
-    __inject: InjectableType;
-
-    // configure?(config: any): void;
-}
-
 /** 
- * The 'name' of a class, rather than an instance. 
+ * The static 'name' of a class, rather than an instance. 
  * E.g. `MyClass` instead of `new MyClass()`. 
  */
 export type ClassType<T> = { new (...args: any[]): T };
@@ -26,32 +17,10 @@ export type ClassType<T> = { new (...args: any[]): T };
 /**
  * Alias of {@link ClassType}. 
  */
-export type DependsOn<T> = ClassType<T>;
-
-/**
- * Interface for extension bundles. 
- * You may define your own configuration object type. 
- */
-export interface BundleInterface<T extends object> extends Injectable {
-    config: T;
-    configure(config: T): void;
-}
-
-/** Maps the correct configuration type hints from a given BundleInterface. */
-export type BundleConfigType<T> 
-    = T extends BundleInterface<infer X> ? X : never;
-
-// type GenericOf<T> = T extends Injectable<infer X> ? X : never;
-type IsInjectable<T> = T extends Injectable ? T : false;
-type GetInjectableType<T> = T extends { __inject: infer X } ? X : never;
+export type DependsOn<T> = T | ClassType<T>;
 
 type MapDependencies<T> = {
-    [P in keyof T]: 
-        IsInjectable<T[P]> extends Injectable
-            ? GetInjectableType<T[P]> extends InjectableType.SHARED 
-                ? DependsOn<T[P]> 
-                : T[P] | DependsOn<T[P]>
-            : T[P]
+    [P in keyof T]: DependsOn<T[P]>
 };
 
 /**
@@ -59,3 +28,16 @@ type MapDependencies<T> = {
  */
 export type Dependencies<T extends ClassType<any>> 
     = MapDependencies<ConstructorParameters<T>>
+
+/**
+ * Interface for extension bundles. 
+ * You may define your own configuration object type. 
+ */
+export interface BundleInterface<T extends object> {
+    config: T;
+    configure(config: T): void;
+}
+
+/** Maps the correct configuration type hints from a given BundleInterface. */
+export type BundleConfigType<T> 
+    = T extends BundleInterface<infer X> ? X : never;

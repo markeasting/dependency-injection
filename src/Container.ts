@@ -1,6 +1,6 @@
 import { ContainerOverrideUserError, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError } from "./errors";
 
-import { Injectable, InjectableType, ClassType, Dependencies } from './types';
+import { InjectableType, ClassType, Dependencies } from './types';
 
 /**
  * Very minimal Dependency Injection container. 
@@ -11,9 +11,7 @@ import { Injectable, InjectableType, ClassType, Dependencies } from './types';
  * The main point of this container is to expose the dependencies 
  * of (sub)systems more explicitely. 
  */
-export class Container implements Injectable {
-
-    __inject: InjectableType.SHARED;
+export class Container {
 
     /** Can be used for application globals / config. */
     protected parameters: Record<string, any> = {};
@@ -40,8 +38,8 @@ export class Container implements Injectable {
         return this.parameters[key] as T;
     }
 
-    /** Registers an {@link Injectable} class as a service. */
-    public register<T extends ClassType<Injectable>>(
+    /** Registers a class as a service. */
+    public register<T extends ClassType<any>>(
         ctor: T, 
         dependencies: Dependencies<T>,
         lifetime: InjectableType = InjectableType.SHARED
@@ -56,6 +54,22 @@ export class Container implements Injectable {
         this.services.set(ctor, null);
         this.dependencies.set(ctor, deps);
         this.#serviceLifetimes.set(ctor, lifetime);
+    }
+
+    /** Registers a class as a singleton service. */
+    public singleton<T extends ClassType<any>>(
+        ctor: T, 
+        dependencies: Dependencies<T>
+    ): void {
+        this.register(ctor, dependencies, InjectableType.SHARED);
+    }
+
+    /** Registers a class as a transient service. */
+    public transient<T extends ClassType<any>>(
+        ctor: T, 
+        dependencies: Dependencies<T>
+    ): void {
+        this.register(ctor, dependencies, InjectableType.TRANSIENT);
     }
 
     /** 
@@ -78,7 +92,7 @@ export class Container implements Injectable {
      * You may omit the 'dependencies' argument to match the 
      * constructor signature of the overridden class. 
      */
-    public override<T extends ClassType<Injectable>>(
+    public override<T extends ClassType<any>>(
         ctor: T,
         overrideCtor: T, 
         dependencies?: Dependencies<T>
@@ -105,8 +119,8 @@ export class Container implements Injectable {
      * Will throw a {@link ServiceNotFoundError} if the service was not 
      * registered via {@link register()}.
      */
-    public get<T extends object>(ctor: ClassType<T>): T {
-        return this.resolve(ctor as ClassType<Injectable>, true) as T;
+    public get<T>(ctor: ClassType<T>): T {
+        return this.resolve(ctor, true) as T;
     }
 
     /** 
@@ -114,7 +128,7 @@ export class Container implements Injectable {
      * 
      * In strict mode, will throw a {@link ServiceNotFoundError}.
      */
-    public resolve<T extends Injectable>(
+    public resolve<T>(
         ctor: ClassType<T>, 
         strict = true
     ): T|undefined {
@@ -149,7 +163,7 @@ export class Container implements Injectable {
     /** 
      * Creates a new instance of a service and resolves/injects it's dependencies.
      */
-    private createInstance<T extends Injectable>(ctor: ClassType<T>): T {
+    private createInstance<T>(ctor: ClassType<T>): T {
 
         /* Resolve dependencies */
         const depsCtors = this.dependencies.get(ctor) || [];

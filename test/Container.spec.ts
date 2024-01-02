@@ -1,17 +1,17 @@
 import { expect, test } from "bun:test";
-import { ContainerOverrideUserError, Container, ContainerNotResolvedError, CyclicalDependencyError, Injectable, InjectableType, ServiceNotFoundError, assert } from "../src";
+import { ContainerOverrideUserError, Container, ContainerNotResolvedError, CyclicalDependencyError, InjectableType, ServiceNotFoundError, assert } from "../src";
 
 const TEST_VALUE1 = 69;
 const TEST_VALUE2 = 42;
 const TEST_VALUE3 = 32;
 
-class MyService implements Injectable {
-    __inject: InjectableType.SHARED;
+class MyService {
+    id: number;
     getValue1() { return TEST_VALUE1 }
 }
 
-class MyNonSharedService implements Injectable {
-    __inject: InjectableType.TRANSIENT;
+class MyTransientService {
+    id: number;
     getValue2() { return TEST_VALUE2 }
 }
 
@@ -19,24 +19,23 @@ class MyClassConfig {
     somevar: boolean = true;
 }
 
-class MyClass implements Injectable {
-    __inject: InjectableType.SHARED;
+class MyClass {
     constructor(
         public dep: MyService,
-        public nonSharedDep: MyNonSharedService,
+        public transient: MyTransientService,
         public config: MyClassConfig
     ) {
         // assert(dep, nonSharedDep);
     }
     testDep1() { return this.dep.getValue1() }
-    testDep2() { return this.nonSharedDep.getValue2() }
+    testDep2() { return this.transient.getValue2() }
 }
 
 test('Container:construct()', () => {
     const container = new Container();
     container.build();
 
-    expect(container.get(Container)).toBe(container);
+    expect(container.get(Container)).toStrictEqual(container);
 });
 
 test('Container:register()', () => {
@@ -45,14 +44,14 @@ test('Container:register()', () => {
     container.register(MyService, []);
     container.build();
 
-    expect(container.get(MyService)).toEqual(new MyService);
+    expect(container.get(MyService)).toStrictEqual(new MyService);
 });
 
 test('Container:register() - throw if cyclical dependency was found', () => {
     const container = new Container();
 
-    class BadService implements Injectable {
-        __inject: InjectableType.SHARED;
+    class BadService {
+        static injectAs = InjectableType.SHARED;
         constructor(private selfReference: BadService) {}
     }
 
@@ -83,53 +82,74 @@ test('Container:get() - type:shared', () => {
     const instance1 = container.get(MyService);
     const instance2 = container.get(MyService);
 
+    instance1.id = 1;
+    instance2.id = 2; 
+    
     expect(instance1).toStrictEqual(instance2);
+    
+    // instance1 == instance2, so instance1.id will also be '2'
+    expect(instance1.id).toStrictEqual(instance2.id);
 });
 
 test('Container:get() - type:transient', () => {
     const container = new Container();
 
-    container.register(MyNonSharedService, []);
+    container.transient(MyTransientService, []);
     container.build();
 
-    const instance = container.get(MyNonSharedService);
+    const instance1 = container.get(MyTransientService);
+    const instance2 = container.get(MyTransientService);
 
-    expect(instance).toBeInstanceOf(MyNonSharedService);
+    expect(instance1).toBeInstanceOf(MyTransientService);
+    expect(instance2).toBeInstanceOf(MyTransientService);
+
+    instance1.id = 1;
+    instance2.id = 2;
+    
+    // instance1 !== instance2, so the id's will be different. 
+    expect(instance1).not.toStrictEqual(instance2);
 });
 
 test('Container:get() - transients with shared deps', () => {
 
-    class MainClass implements Injectable {
-        __inject: InjectableType.SHARED;
-    }
+    class RandomGenerator  {
+        counter: number = 0;
 
-    class RandomGenerator implements Injectable {
-        __inject: InjectableType.SHARED;
+        constructor() {
+        }
+
         getValue() { 
+            this.counter++;
             return performance.now() * Math.random()
         }
     }
 
-    class TransientService implements Injectable {
-        __inject: InjectableType.TRANSIENT;
+    class TransientService  {
         val: number;
+        
         constructor(
-            public rand: RandomGenerator
+            public dep: RandomGenerator
         ) {
-            this.val = rand.getValue();
+            this.val = dep.getValue();
         }
     }
 
     const container = new Container();
-    container.register(RandomGenerator, [], InjectableType.SHARED);
-    container.register(TransientService, [RandomGenerator], InjectableType.TRANSIENT);
+    container.singleton(RandomGenerator, []);
+    container.transient(TransientService, [RandomGenerator]);
     container.build();
 
     const instance1 = container.get(TransientService);
     const instance2 = container.get(TransientService);
 
-    expect(instance1.rand).toStrictEqual(instance1.rand);
-    expect(instance1.val).not.toEqual(instance2.val);
+    /* The random values generated in the transients should be unique */
+    expect(instance1.val).not.toStrictEqual(instance2.val);
+
+    /* dep is a singleton, they should be the same for each transient */
+    expect(instance1.dep).toStrictEqual(instance1.dep);
+
+    /* Test if the side effects in getValue() persist in 'dep' */
+    expect(instance1.dep.counter).toStrictEqual(2);
 })
 
 
@@ -151,7 +171,7 @@ test('Container:get() - throw if service is not registered', () => {
     const container = new Container();
 
     // container.register(MyNonSharedService, []); // This would normally be required
-    container.register(MyClass, [MyService, MyNonSharedService, new MyClassConfig()]);
+    container.register(MyClass, [MyService, MyTransientService, new MyClassConfig()]);
     container.build();
 
     // Check if container throws: MyModule wasn't registered
@@ -169,24 +189,46 @@ test('Container:get() - throw if service is not registered', () => {
     );
 });
 
-test('Container:get() - inject deps', () => {
+test('Container:get() - inject complex deps', () => {
     const container = new Container();
 
     const config = new MyClassConfig();
 
-    container.register(MyService, []);
-    container.register(MyNonSharedService, []);
-    container.register(MyClass, [MyService, MyNonSharedService, config]);
+    container.singleton(MyService, []);
+    container.transient(MyTransientService, []);
+    container.singleton(MyClass, [MyService, MyTransientService, config]);
     container.build();
 
     const instance = container.get(MyClass);
     
     expect(instance).not.toBeUndefined();
     expect(instance.dep).not.toBeUndefined();
-    expect(instance.nonSharedDep).not.toBeUndefined();
+    expect(instance.transient).not.toBeUndefined();
     expect(instance.config).toStrictEqual(config);
-    expect(instance.testDep1()).toEqual(TEST_VALUE1);
-    expect(instance.testDep2()).toEqual(TEST_VALUE2);
+    expect(instance.testDep1()).toStrictEqual(TEST_VALUE1);
+    expect(instance.testDep2()).toStrictEqual(TEST_VALUE2);
+});
+
+test('Container:get() - inject primitives', () => {
+    const container = new Container();
+
+    class Foo {
+        constructor(
+            public obj: { myvar: boolean }, 
+            public bool: boolean, 
+            public num: number
+        ) {}
+    }
+
+    container.singleton(Foo, [{ myvar: false }, true, TEST_VALUE1]);
+    container.build();
+
+    const instance = container.get(Foo);
+    
+    expect(instance).not.toBeUndefined();
+    expect(instance.obj.myvar).toStrictEqual(false);
+    expect(instance.bool).toStrictEqual(true);
+    expect(instance.num).toStrictEqual(TEST_VALUE1);
 });
 
 
@@ -199,10 +241,13 @@ test('Container:get() - override', () => {
         extraMethod() { return TEST_VALUE3; }
     }
 
-    container.register(MyService, []);
-    container.register(MyClass, [MyService, new MyNonSharedService, config]);
+    container.singleton(MyService, []);
+    container.transient(MyTransientService, []);
+    container.singleton(MyClass, [MyService, MyTransientService, config]);
 
-    container.override(MyClass, OverrideClass); // Optionally, you can also override deps
+    container.override(MyClass, OverrideClass);
+    // container.override(MyClass, OverrideClass, [...]); // Optionally, you can also override deps
+
     container.build();
 
     const instance = container.get(MyClass);
@@ -210,10 +255,10 @@ test('Container:get() - override', () => {
     expect(instance).toBeInstanceOf(OverrideClass);
     expect(instance).not.toBeUndefined();
     expect(instance.dep).not.toBeUndefined();
-    expect(instance.nonSharedDep).not.toBeUndefined();
+    expect(instance.transient).not.toBeUndefined();
     expect(instance.config).toStrictEqual(config);
-    expect(instance.testDep1()).toEqual(TEST_VALUE1);
-    expect(instance.testDep2()).toEqual(TEST_VALUE2);
+    expect(instance.testDep1()).toStrictEqual(TEST_VALUE1);
+    expect(instance.testDep2()).toStrictEqual(TEST_VALUE2);
 });
 
 test('Container:get() - throw if build was called before override', () => {
