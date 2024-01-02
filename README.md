@@ -39,17 +39,12 @@ Or import a globally available container instance directly:
 import { container } from "@wildsea/dependency-injection";
 ```
 
-### Create and register an injectable service
-- Services must implement the `Injectable` interface. 
-- All services are 'shared' by default: you will always receive the same instance when it is injected or queried by the container.
+### Create and register a service
+Services are 'shared' by default: you will always receive the same instance when it is injected or queried by the container.
 
 ```ts
-import type { Injectable, InjectableType } from "@wildsea/dependency-injection";
-
-/* Shared service with zero dependencies  */
-class Foo implements Injectable { 
-    __inject: InjectableType.SHARED;
-    
+/* Service with zero dependencies  */
+class Foo { 
     getValue() {
         return 42;
     }
@@ -59,14 +54,22 @@ class Foo implements Injectable {
 container.register(Foo, []);
 ```
 
+### Object lifecycle: shared / singleton or transient
+By default, `register()` will add a shared service - You may pass the lifetime as the third argument. 
+
+Two shortcuts for this are `singleton()` and `transient()`: 
+
+```ts
+container.singleton(...);   // Singleton / shared service: each instance is the same.
+container.transient(...);   // Transient service: each instance is unique. 
+```
+
 ### Define a service with dependencies
 In this example, `MyClass` is a service that depends upon an instance of `Foo` (registered in the previous section). 
 ```ts
 import { Foo } from '.'
 
-class MyClass implements Injectable {
-    
-    __inject: InjectableType.SHARED;
+class MyClass {
 
     /* MyClass depends on `Foo` */
     constructor(
@@ -78,20 +81,22 @@ class MyClass implements Injectable {
     }
 }
 
-/* Register the service and pass Foo as injectable. */
+/* Register the service and wire `Foo` to be injected. */
 container.register(MyClass, [Foo]); 
 ```
 
 ### Get an instance from the container
+Before getting instances, you must first call `build`. This will wire the services.
 
 ```ts
-/* You must call `build` first. This will wire the services. */
 container.build(); 
+```
+You can request an instance via `get()`. Only when this is called, the dependencies will be resolved and injected (lazy initialization).
 
-/* Once you get an instance, dependencies will be injected 'lazily'. */
+```ts
 const instance = container.get(MyClass); 
 
-console.log(instance.method()); // Returns '42' from the 'Foo' dependency (see above)
+console.log(instance.foo.getValue()); // Returns '42' from the 'Foo' dependency (see above)
 ```
 
 ### Type hinting for wiring / injecting services
@@ -102,26 +107,24 @@ container.register(MyClass, [Foo]); // Everything is OK.
 container.register(MyClass, [Baz, 123]); // Error! MyClass requires Foo.
 ```
 
-### Passing non-injectables (e.g. plain objects)
-You may also pass things like objects or other primitives (which aren't shared services). These must be constructed when registering the class. 
+### Passing non-injectables (e.g. primitives and plain objects)
+You may also pass things like objects or primitives (which aren't or cannot be registered services). These must be constructed when registering the class: 
 ```ts
-/* Note that this object does not implement `Injectable`. */
 class SomeConfig {
     myvar = true
 }
 
-class SomeClass implements Injectable {
-    
-    __inject: InjectableType.SHARED;
+class SomeClass {
 
-    /* SomeClass depends on a plain config object */
+    /* SomeClass depends on primitives */
     constructor(
-        public config: SomeConfig
+        public config: SomeConfig,
+        public mynumber: number
     ) {}
 }
 
-/* Register the service and pass the config object as a new instance. */
-container.register(SomeClass, [new SomeConfig()]); 
+/* Register the service and pass the dependencies as values. */
+container.register(SomeClass, [new SomeConfig(), 1234]); 
 ```
 
 # Container extensions
@@ -141,8 +144,6 @@ export class MyBundleConfig {
 /* Create the bundle definition */
 export class MyBundle implements BundleInterface<MyBundleConfig> {
 
-    __inject: InjectableType.SHARED;
-
     config = new MyBundleConfig();
 
     constructor(
@@ -157,8 +158,8 @@ export class MyBundle implements BundleInterface<MyBundleConfig> {
         this.config = {...this.config, ...config}; 
 
         /* Register the services in this bundle */
-        container.register(Timer, []);
-        container.register(GraphicsManager, [Timer, this.config.graphics]);
+        container.transient(Timer, []);
+        container.singleton(GraphicsManager, [Timer, this.config.graphics]);
 
         /* Then register the bundle itself */
         container.register(MyBundle, [Timer, GraphicsManager]);
@@ -167,19 +168,25 @@ export class MyBundle implements BundleInterface<MyBundleConfig> {
 ```
 
 ### Register and load the extension
+You may use the globally available `container` instance, since this has extensions enabled by default. 
+```ts
+import { container } from "@wildsea/dependency-injection";
+```
+
+Or create one explicitly: 
 
 ```ts
 import { ExtendableContainer } from "@wildsea/dependency-injection";
-import { MyBundle } from "."
 
-/* Create the container */
 const container = new ExtendableContainer();
+```
 
-/* Register the extension */
+Register the extension with: 
+```ts
 container.addExtension(MyBundle);
 ```
 
-### Get the extension 
+### Get an extension from the container 
 ```ts
 import { MyBundle } from "."
 
