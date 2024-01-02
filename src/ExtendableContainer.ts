@@ -24,7 +24,7 @@ export class ExtendableContainer extends Container {
     public configure<T extends BundleInterface<any>>(
         bundleCtor: ClassType<T>, 
         config: BundleConfigType<T>
-    ) {
+    ): void {
         this.extensionConfig.set(bundleCtor, config);
     }
 

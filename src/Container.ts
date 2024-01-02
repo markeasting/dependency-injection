@@ -29,12 +29,12 @@ export class Container implements Injectable {
     }
 
     /** See {@link parameters}. */
-    public setParameter(key: string, value: any) {
+    public setParameter(key: string, value: any): void {
         this.parameters[key] = value;
     }
 
     /** See {@link parameters}. */
-    public getParameter<T = any>(key: string) {
+    public getParameter<T = any>(key: string): T {
         return this.parameters[key] as T;
     }
 
@@ -113,7 +113,10 @@ export class Container implements Injectable {
      * 
      * In strict mode, will throw a {@link ServiceNotFoundError}.
      */
-    public resolve<T extends Injectable>(ctor: ClassType<T>, strict = true): T|undefined {
+    public resolve<T extends Injectable>(
+        ctor: ClassType<T>, 
+        strict = true
+    ): T|undefined {
         if (!this.compiled) {
             throw new ContainerNotResolvedError();
         }
