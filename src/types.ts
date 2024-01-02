@@ -24,6 +24,11 @@ export interface Injectable {
 export type ClassType<T> = { new (...args: any[]): T };
 
 /**
+ * Alias of {@link ClassType}. 
+ */
+export type DependsOn<T> = ClassType<T>;
+
+/**
  * Interface for extension bundles. 
  * You may define your own configuration object type. 
  */
@@ -40,11 +45,11 @@ export type BundleConfigType<T>
 type IsInjectable<T> = T extends Injectable ? T : false;
 type GetInjectableType<T> = T extends { __inject: infer X } ? X : never;
 
-type MapToClassType<T> = {
+type MapDependencies<T> = {
     [P in keyof T]: 
         IsInjectable<T[P]> extends Injectable
             ? GetInjectableType<T[P]> extends InjectableType.SHARED 
-                ? ClassType<T[P]> 
+                ? DependsOn<T[P]> 
                 : T[P]
             : T[P]
 };
@@ -53,4 +58,4 @@ type MapToClassType<T> = {
  * Get the dependency types of a class, based on it's constructor parameters.
  */
 export type Dependencies<T extends ClassType<any>> 
-    = MapToClassType<ConstructorParameters<T>>
+    = MapDependencies<ConstructorParameters<T>>
