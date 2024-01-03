@@ -31,14 +31,14 @@ class MyClass {
     testDep2() { return this.transient.getValue2() }
 }
 
-test('Container:construct() / self-register', () => {
+test('construct() / self-register', () => {
     const container = new Container();
     container.build();
 
     expect(container.get(Container)).toStrictEqual(container);
 });
 
-test('Container:setParameter()', () => {
+test('setParameter()', () => {
     const container = new Container();
     container.setParameter('myvar', TEST_VALUE1);
     container.setParameter('someother', true);
@@ -47,7 +47,7 @@ test('Container:setParameter()', () => {
     expect(container.getParameter<boolean>('someother')).toStrictEqual(true);
 });
 
-test('Container:register()', () => {
+test('register()', () => {
     const container = new Container();
 
     container.register(MyService, []);
@@ -56,7 +56,7 @@ test('Container:register()', () => {
     expect(container.get(MyService)).toStrictEqual(new MyService);
 });
 
-test('Container:register() - throw if cyclical dependency was found', () => {
+test('register() - throw if cyclical dependency was found', () => {
     const container = new Container();
 
     class BadService {
@@ -70,7 +70,7 @@ test('Container:register() - throw if cyclical dependency was found', () => {
     );
 });
 
-test('Container:get() - zero dependencies', () => {
+test('get() - zero dependencies', () => {
     const container = new Container();
 
     container.register(MyService, []);
@@ -81,7 +81,7 @@ test('Container:get() - zero dependencies', () => {
     expect(instance).toBeInstanceOf(MyService);
 });
 
-test('Container:get() - type:shared', () => {
+test('get() - type:shared', () => {
     const container = new Container();
 
     container.register(MyService, []);
@@ -99,7 +99,7 @@ test('Container:get() - type:shared', () => {
     expect(instance1.id).toStrictEqual(instance2.id);
 });
 
-test('Container:get() - type:transient', () => {
+test('get() - type:transient', () => {
     const container = new Container();
 
     container.transient(MyTransientService, []);
@@ -118,7 +118,7 @@ test('Container:get() - type:transient', () => {
     expect(instance1).not.toStrictEqual(instance2);
 });
 
-test('Container:get() - transients with shared deps', () => {
+test('get() - transients with shared deps', () => {
 
     class RandomGenerator  {
         counter: number = 0;
@@ -158,7 +158,7 @@ test('Container:get() - transients with shared deps', () => {
 })
 
 
-test('Container:get() - throw if build was called before get', () => {
+test('get() - throw if build was called before get', () => {
     const container = new Container();
 
     container.register(MyService, []);
@@ -172,7 +172,7 @@ test('Container:get() - throw if build was called before get', () => {
     );
 });
 
-test('Container:get() - throw if service is not registered', () => {
+test('get() - throw if service is not registered', () => {
     const container = new Container();
 
     // container.register(MyNonSharedService, []); // This would normally be required
@@ -194,7 +194,7 @@ test('Container:get() - throw if service is not registered', () => {
     );
 });
 
-test('Container:get() - inject complex deps', () => {
+test('get() - inject complex deps', () => {
     const container = new Container();
 
     const config = new MyClassConfig();
@@ -213,7 +213,7 @@ test('Container:get() - inject complex deps', () => {
     expect(instance.testDep2()).toStrictEqual(TEST_VALUE2);
 });
 
-test('Container:get() - inject primitives', () => {
+test('get() - inject primitives', () => {
     const container = new Container();
 
     class Foo {
@@ -236,7 +236,7 @@ test('Container:get() - inject primitives', () => {
 });
 
 
-test('Container:get() - override', () => {
+test('get() - override', () => {
     const container = new Container();
 
     const config = new MyClassConfig();
@@ -266,7 +266,7 @@ test('Container:get() - override', () => {
     expect(instance.testDep2()).toStrictEqual(TEST_VALUE2);
 });
 
-test('Container:get() - throw if build was called before override', () => {
+test('get() - throw if build was called before override', () => {
     const container = new Container();
 
     class OverrideClass extends MyClass {
@@ -284,6 +284,18 @@ test('Container:get() - throw if build was called before override', () => {
     );
 });
 
-/** 
- * @TODO add tests for bundles and bundle configuration
- */
+test('method chaining', () => {
+    const container = new Container();
+
+    const config = new MyClassConfig();
+
+    container
+        .singleton(MyService, [])
+        .transient(MyTransientService, [])
+        .singleton(MyClass, [MyService, MyTransientService, config])
+        .build();
+
+    const instance = container.get(MyClass);
+    
+    expect(instance.dep).toBeInstanceOf(MyService);
+});
