@@ -179,7 +179,7 @@ in your own project. </p>
 <p><code>npm link @wildsea/dependency-injection</code></p>
 <a id="md:development--building" class="tsd-anchor"></a><h2><a href="#md:development--building">Development / building</a></h2><p><code>npm run build</code> - run the Typescript compiler (<code>tsc</code>).</p>
 <p><code>npm run watch</code> - runs <code>tsc</code> in watch mode.</p>
-<a id="md:unit-testing" class="tsd-anchor"></a><h3><a href="#md:unit-testing">Unit testing</a></h3><p><code>npm run test</code> - uses <a href="https://bun.sh/docs/cli/test">Bun</a> as test runner.</p>
+<a id="md:unit-testing" class="tsd-anchor"></a><h3><a href="#md:unit-testing">Unit testing</a></h3><p><code>npm test</code> - uses <a href="https://bun.sh/docs/cli/test">Bun</a> as test runner.</p>
 <a id="md:usage-guide" class="tsd-anchor"></a><h1><a href="#md:usage-guide">Usage guide</a></h1><a id="md:create-the-container" class="tsd-anchor"></a><h3><a href="#md:create-the-container">Create the container</a></h3><pre><code class="language-ts"><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-2">Container</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&quot;@wildsea/dependency-injection&quot;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">container</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-6">Container</span><span class="hl-1">();</span>
 </code><button>Copy</button></pre>
 <p>Or import a globally available container instance directly:</p>
