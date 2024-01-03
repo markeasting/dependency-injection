@@ -1,6 +1,15 @@
 {
     "$schema": "https://typedoc.org/schema.json",
     "out": "docs",
+
+    "navigationLinks": {
+        "Docs": "https://markeasting.github.io/dependency-injection/",
+        "GitHub": "https://github.com/markeasting/dependency-injection"
+    },
+    // "sidebarLinks": {
+    //     "Home": "https://markeasting.github.io/dependency-injection/"
+    // },
+
     "plugin": ["typedoc-material-theme"],
     "themeColor": "#ffffff",
     "customCss": "./typedoc.css"

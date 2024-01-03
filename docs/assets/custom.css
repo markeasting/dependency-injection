@@ -8,3 +8,7 @@ body,
     --font-sans: "Roboto", sans-serif;
     --font-mono: monospace;
 }
+
+#tsd-search .title {
+    max-width: 400px;
+}
