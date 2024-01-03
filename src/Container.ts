@@ -5,11 +5,12 @@ import { Lifetime, ClassType, Dependencies } from './types';
 /**
  * Very minimal Dependency Injection container. 
  * 
- * In the past, static classes / globals / singletons caused 
- * lots of 'spaghetti' (e.g. hidden or cyclical dependencies).
- * 
  * The main point of this container is to expose the dependencies 
  * of (sub)systems more explicitely. 
+ * 
+ * Other DI solutions use decorators (which are experimental) or 
+ * `reflect-metadata` (extra package). This package heavily relies on 
+ * Typescript and native Javascript features instead. 
  */
 export class Container {
 
@@ -83,8 +84,7 @@ export class Container {
     /** 
      * Resolves the container. 
      * 
-     * Also applies implementation overrides that were set 
-     * via {@link override()}.
+     * Also applies implementation overrides that were set via {@link override}.
      */
     public build(): this {
         this.#compiled = true;
@@ -129,7 +129,7 @@ export class Container {
      * Retrieves a service from the container with resolved dependencies. 
      * 
      * Will throw a {@link ServiceNotFoundError} if the service was not 
-     * registered via {@link register()}.
+     * registered via {@link register}.
      */
     public get<T>(ctor: ClassType<T>): T {
         return this.resolve(ctor, true) as T;

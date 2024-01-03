@@ -6,7 +6,11 @@ import type { ClassType, BundleInterface, BundleConfigType } from './types';
 /**
  * DI container that supports extensions via {@link BundleInterface}.
  * 
- * See {@link addExtension()} and {@link getExtension()}.
+ * You can add your own extension bundles to the container. 
+ * You may use this system to add 'feature toggles' in your application. 
+ * This is loosely based on the way Symfony handles bundles.
+ * 
+ * See {@link addExtension} and {@link getExtension}.
  */
 export class ExtendableContainer extends Container {
 
@@ -18,7 +22,7 @@ export class ExtendableContainer extends Container {
     /** 
      * Add an extension bundle to the container. 
      * 
-     * Bundles can be configured via {@link configure()}. 
+     * You may pass configuration overrides via the `config` parameter. 
      * 
      * See also: {@link BundleInterface}.
      */
@@ -54,9 +58,8 @@ export class ExtendableContainer extends Container {
     /** 
      * Resolves the container. 
      * 
-     * - Configures extension bundles (see {@link addExtension()}) 
-     *   and their configuration (see {@link configure()}).
-     * - Applies implementation overrides, see {@link override()}.
+     * - Configures extension bundles - see {@link addExtension}.
+     * - Applies implementation overrides, see {@link override}.
      */
     public build(): this {
         super.build();
@@ -72,7 +75,7 @@ export class ExtendableContainer extends Container {
     /** 
      * Configures a bundle with the given parameters. 
      * 
-     * See also: {@link addExtension()}. 
+     * See also: {@link addExtension}. 
      */
     // public configure<T extends BundleInterface<any>>(
     //     bundleCtor: ClassType<T>, 
