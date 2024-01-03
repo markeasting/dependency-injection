@@ -29,8 +29,10 @@ export class Container {
     }
 
     /** See {@link parameters}. */
-    public setParameter(key: string, value: any): void {
+    public setParameter(key: string, value: any): this {
         this.parameters[key] = value;
+
+        return this;
     }
 
     /** See {@link parameters}. */
@@ -43,7 +45,7 @@ export class Container {
         ctor: T, 
         dependencies: Dependencies<T>,
         lifetime: Lifetime = Lifetime.SHARED
-    ): void {
+    ): this {
 
         const deps = dependencies as any[];
 
@@ -54,22 +56,28 @@ export class Container {
         this.services.set(ctor, null);
         this.dependencies.set(ctor, deps);
         this.#serviceLifetimes.set(ctor, lifetime);
+        
+        return this;
     }
 
     /** Registers a class as a singleton service. */
     public singleton<T extends ClassType<any>>(
         ctor: T, 
         dependencies: Dependencies<T>
-    ): void {
+    ): this {
         this.register(ctor, dependencies, Lifetime.SHARED);
+        
+        return this;
     }
 
     /** Registers a class as a transient service. */
     public transient<T extends ClassType<any>>(
         ctor: T, 
         dependencies: Dependencies<T>
-    ): void {
+    ): this {
         this.register(ctor, dependencies, Lifetime.TRANSIENT);
+        
+        return this;
     }
 
     /** 
@@ -78,12 +86,14 @@ export class Container {
      * Also applies implementation overrides that were set 
      * via {@link override()}.
      */
-    public build(): void {
+    public build(): this {
         this.#compiled = true;
 
         this.overides.forEach((impl, key) => {
             this.services.set(key, this.createInstance(impl));
         });
+
+        return this;
     }
 
     /** 
@@ -96,7 +106,7 @@ export class Container {
         ctor: T,
         overrideCtor: T, 
         dependencies?: Dependencies<T>
-    ): void {
+    ): this {
         if (this.#compiled) {
             throw new ContainerOverrideUserError;
         }
@@ -111,6 +121,8 @@ export class Container {
             if (existingDeps) 
                 this.dependencies.set(overrideCtor, existingDeps);
         }
+
+        return this;
     }
 
     /** 

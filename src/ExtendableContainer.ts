@@ -25,7 +25,7 @@ export class ExtendableContainer extends Container {
     public addExtension<T extends BundleInterface<any>>(
         bundleCtor: ClassType<T>,
         config?: BundleConfigType<T>
-    ): void {
+    ): this {
         if (!this.extensions.has(bundleCtor)) {
             this.extensions.set(bundleCtor, new bundleCtor());
             this.#extTypeMap.set(bundleCtor.name, bundleCtor);
@@ -34,6 +34,8 @@ export class ExtendableContainer extends Container {
         if (config) {
             this.extensionConfig.set(bundleCtor, config);
         }
+
+        return this;
     }
     
     /** 
@@ -56,13 +58,15 @@ export class ExtendableContainer extends Container {
      *   and their configuration (see {@link configure()}).
      * - Applies implementation overrides, see {@link override()}.
      */
-    public build(): void {
+    public build(): this {
         super.build();
 
         for (const [key, Bundle] of this.extensions) {
             const config = this.extensionConfig.get(key);
             Bundle.configure(config);
         }
+        
+        return this;
     }
 
     /** 
