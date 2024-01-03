@@ -8,6 +8,7 @@
   "main": "src/index.ts",
   "types": "src/index.d.ts",
   "scripts": {
+    "test": "bun test --watch",
     "build": "tsc && npm run docs",
     "watch": "tsc -w",
     "docs": "typedoc src/index.ts --customCss ./typedoc.css"

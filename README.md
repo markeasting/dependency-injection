@@ -21,9 +21,10 @@ This package is not available on NPM just yet. For now, you can clone this repos
 `npm run watch` - runs `tsc` in watch mode.
 
 ### Unit testing
-`bun test --watch`
+`npm run test` - uses [Bun](https://bun.sh/) as test runner.
 
 # Usage
+If you like to skip straight to a concrete usecase, you can check out the [basic example app](test/example.spec.ts). 
 
 ### Create the container
 
@@ -133,6 +134,8 @@ You can add your own extension bundles to the container. You may use this system
 ### Create your extension bundle
 
 ```ts
+import { container } from "@wildsea/dependency-injection";
+
 import type { BundleInterface } from '@wildsea/dependency-injection'
 
 /* Define the bundle configuration class */
@@ -179,15 +182,12 @@ import { ExtendableContainer } from "@wildsea/dependency-injection";
 const container = new ExtendableContainer();
 ```
 
-Register your extension with: 
-```ts
-container.addExtension(MyBundle);
-```
-Optionally, you may pass bundle configuration
+Then load / enable your extension bundle. Optionally, you can pass configuration. 
 
 ```ts
 container.addExtension(MyBundle, {
-    debug: true // Type hinted by `MyBundleConfig`, see above
+    // TS will type-hint this config as `MyBundleConfig`
+    debug: true 
 });
 ```
 
@@ -221,4 +221,5 @@ const ext = container.getExtension<MyBundle>('MyBundle');
 
 // if (ext) { ... }
 ```
-
+# Putting it all together
+You can check out the basic application example [here](test/example.spec.ts). 
