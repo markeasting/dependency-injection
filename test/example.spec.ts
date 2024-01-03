@@ -1,5 +1,7 @@
-import { expect, spyOn, test } from "bun:test";
+/* Test imports, you can ignore these */
+import { expect, spyOn, test } from "bun:test"; const c = spyOn(console, 'log');
 
+/* Containers.ts */
 const container = new ExtendableContainer();
 const container2 = new ExtendableContainer();
 
@@ -13,9 +15,7 @@ enum LogLevel {
 
 class LoggerService {
 
-    constructor(
-        public logLevel: LogLevel
-    ) {}
+    constructor(public logLevel: LogLevel) {}
 
     log(string: string) {
         console.log(`${this.logLevel} - ${string}`);
@@ -25,9 +25,7 @@ class LoggerService {
 /* Database.ts */
 class Database {
 
-    constructor(
-        public logger: LoggerService
-    ) {}
+    constructor(public logger: LoggerService) {}
 
     connect() {
         this.logger.log('Success!');
@@ -87,8 +85,7 @@ class BaseApp {
 /**
  * Test case / example
  */
-test('Full example', () => {
-    const _console = spyOn(console, 'log');
+test('Application entrypoint', () => {
 
     /** 
      * main.ts - This would be your application entrypoint.
@@ -102,12 +99,14 @@ test('Full example', () => {
 
     const app = container.get(BaseApp); // The app is now initialized and running. 
 
+    /* Thats it! */
+
     /* Test cases */
     expect(app).toBeInstanceOf(BaseApp);
     expect(app.database).toBeInstanceOf(Database);
     expect(app.database?.logger).toBeInstanceOf(LoggerService);
 
-    expect(_console).toHaveBeenCalledWith('DEBUG - Success!');
+    expect(c).toHaveBeenCalledWith('DEBUG - Success!');
 });
 
 /**
@@ -115,6 +114,7 @@ test('Full example', () => {
  * Note: you must change `container` to `container2` in BaseApp for this to work. 
  */
 // test('Disabled bundle', () => {
+    
 //     /** 
 //      * main.ts - This would be your application entrypoint.
 //      */
