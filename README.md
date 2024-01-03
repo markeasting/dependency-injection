@@ -35,7 +35,7 @@ in your own project.
 `npm run watch` - runs `tsc` in watch mode.
 
 ### Unit testing
-`npm run test` - uses [Bun](https://bun.sh/docs/cli/test) as test runner.
+`npm test` - uses [Bun](https://bun.sh/docs/cli/test) as test runner.
 
 # Usage guide
 
