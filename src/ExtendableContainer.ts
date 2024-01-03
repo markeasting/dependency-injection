@@ -26,10 +26,14 @@ export class ExtendableContainer extends Container {
         bundleCtor: ClassType<T>,
         config?: BundleConfigType<T>
     ): void {
-        this.extensions.set(bundleCtor, new bundleCtor());
-        this.#extTypeMap.set(bundleCtor.name, bundleCtor);
+        if (!this.extensions.has(bundleCtor)) {
+            this.extensions.set(bundleCtor, new bundleCtor());
+            this.#extTypeMap.set(bundleCtor.name, bundleCtor);
+        }
         
-        if (config) this.extensionConfig.set(bundleCtor, config);
+        if (config) {
+            this.extensionConfig.set(bundleCtor, config);
+        }
     }
     
     /** 
