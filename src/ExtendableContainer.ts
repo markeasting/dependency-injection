@@ -4,10 +4,9 @@ import { Container } from './Container';
 import type { ClassType, BundleInterface, BundleConfigType } from './types';
 
 /**
- * DI container that supports the {@link BundleInterface}.
+ * DI container that supports extensions via {@link BundleInterface}.
  * 
- * - Register extension bundles via {@link addExtension()}
- * - Set bundle configuration via {@link configure()}
+ * See {@link addExtension()} and {@link getExtension()}.
  */
 export class ExtendableContainer extends Container {
 
@@ -17,18 +16,6 @@ export class ExtendableContainer extends Container {
     #extTypeMap = new Map<string, ClassType<BundleInterface<any>>>();
 
     /** 
-     * Configures a bundle with the given parameters. 
-     * 
-     * See also: {@link addExtension()}. 
-     */
-    public configure<T extends BundleInterface<any>>(
-        bundleCtor: ClassType<T>, 
-        config: BundleConfigType<T>
-    ): void {
-        this.extensionConfig.set(bundleCtor, config);
-    }
-
-    /** 
      * Add an extension bundle to the container. 
      * 
      * Bundles can be configured via {@link configure()}. 
@@ -36,10 +23,13 @@ export class ExtendableContainer extends Container {
      * See also: {@link BundleInterface}.
      */
     public addExtension<T extends BundleInterface<any>>(
-        bundleCtor: ClassType<T>
+        bundleCtor: ClassType<T>,
+        config?: BundleConfigType<T>
     ): void {
         this.extensions.set(bundleCtor, new bundleCtor());
         this.#extTypeMap.set(bundleCtor.name, bundleCtor);
+        
+        if (config) this.extensionConfig.set(bundleCtor, config);
     }
     
     /** 
@@ -70,4 +60,16 @@ export class ExtendableContainer extends Container {
             Bundle.configure(config);
         }
     }
+
+    /** 
+     * Configures a bundle with the given parameters. 
+     * 
+     * See also: {@link addExtension()}. 
+     */
+    // public configure<T extends BundleInterface<any>>(
+    //     bundleCtor: ClassType<T>, 
+    //     config: BundleConfigType<T>
+    // ): void {
+    //     this.extensionConfig.set(bundleCtor, config);
+    // }
 }

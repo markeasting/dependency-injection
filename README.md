@@ -181,9 +181,16 @@ import { ExtendableContainer } from "@wildsea/dependency-injection";
 const container = new ExtendableContainer();
 ```
 
-Register the extension with: 
+Register your extension with: 
 ```ts
 container.addExtension(MyBundle);
+```
+Optionally, you may pass bundle configuration
+
+```ts
+container.addExtension(MyBundle, {
+    debug: true // Type hinted by `MyBundleConfig`, see above
+});
 ```
 
 ### Get an extension from the container 
