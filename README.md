@@ -144,22 +144,20 @@ export class MyBundleConfig {
 /* Create the bundle definition */
 export class MyBundle implements BundleInterface<MyBundleConfig> {
 
-    config = new MyBundleConfig();
-
     constructor(
         public timer: Timer,
         public graphics: GraphicsManager,
     ) {}
 
     /* The configure() method wires the services in this bundle */
-    configure(config: Partial<MyBundleConfig>): void {
+    configure(overrides: Partial<MyBundleConfig>): void {
 
         /* Apply configuration overrides */
-        this.config = {...this.config, ...config}; 
+        const config = {...new MyBundleConfig(), ...overrides}; 
 
         /* Register the services in this bundle */
         container.transient(Timer, []);
-        container.singleton(GraphicsManager, [Timer, this.config.graphics]);
+        container.singleton(GraphicsManager, [Timer, config.graphics]);
 
         /* Then register the bundle itself */
         container.register(MyBundle, [Timer, GraphicsManager]);

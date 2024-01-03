@@ -34,8 +34,7 @@ export type Dependencies<T extends ClassType<any>>
  * You may define your own configuration object type. 
  */
 export interface BundleInterface<T extends object> {
-    config: T;
-    configure(config: T): void;
+    configure(overrides: T): void;
 }
 
 /** Maps the correct configuration type hints from a given BundleInterface. */
