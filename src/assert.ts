@@ -7,7 +7,7 @@
  * }
  * ```
  * 
- * @TODO maybe skip this entire code when building for production
+ * @TODO Skip this entire check when building for production
  */
 export function assert<T>(...args: any[]) {
 

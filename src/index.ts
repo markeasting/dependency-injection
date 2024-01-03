@@ -7,11 +7,13 @@ export * from './assert';
 export * from './errors';
 
 /**
- * A globally available container instance. 
+ * Globally available container instance, can be used as a 'service locator'.
  * 
- * Must be used sparingly as a 'service locator'. Useful in you need your 
- * base app / kernel / controller class constructor to be void of dependencies. 
+ * Should be used sparingly. Useful in you need your 
+ * base app / kernel / controller constructor to have zero dependencies. 
  * 
- * Also useful in the `configure()` method of extension bundles.
+ * Also useful in the `configure()` method of {@link BundleInterface}.
+ * 
+ * @category Container
  */
 export const container = new ExtendableContainer();

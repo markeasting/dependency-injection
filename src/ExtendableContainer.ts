@@ -11,6 +11,8 @@ import type { ClassType, BundleInterface, BundleConfigType } from './types';
  * This is loosely based on the way Symfony handles bundles.
  * 
  * See {@link addExtension} and {@link getExtension}.
+ * 
+ * @category Container
  */
 export class ExtendableContainer extends Container {
 

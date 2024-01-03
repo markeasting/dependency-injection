@@ -11,7 +11,7 @@
     "test": "bun test --watch",
     "build": "tsc && npm run docs",
     "watch": "tsc -w",
-    "docs": "typedoc src/index.ts --customCss ./typedoc.css"
+    "docs": "typedoc src/index.ts"
   },
   "devDependencies": {
     "bun-types": "^1.0.18",

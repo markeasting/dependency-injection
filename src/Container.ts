@@ -3,7 +3,7 @@ import { ContainerOverrideUserError, ContainerNotResolvedError, CyclicalDependen
 import { Lifetime, ClassType, Dependencies } from './types';
 
 /**
- * Very minimal Dependency Injection container. 
+ * Minimal Dependency Injection container. 
  * 
  * The main point of this container is to expose the dependencies 
  * of (sub)systems more explicitely. 
@@ -11,10 +11,11 @@ import { Lifetime, ClassType, Dependencies } from './types';
  * Other DI solutions use decorators (which are experimental) or 
  * `reflect-metadata` (extra package). This package heavily relies on 
  * Typescript and native Javascript features instead. 
+ * 
+ * @category Container
  */
 export class Container {
 
-    /** Can be used for application globals / config. */
     protected parameters: Record<string, any> = {};
 
     protected dependencies    = new Map<ClassType<any>, ClassType<any>[]>();
@@ -25,23 +26,38 @@ export class Container {
 
     #compiled = false;
 
+    /**
+     * Creates a new DI Container and registers itself. 
+     * 
+     * You may also use the globally available instance, see {@link container}.
+     */
     constructor() {
         this.services.set(Container, this);
     }
 
-    /** See {@link parameters}. */
+    /** Set a 'superglobal'. Can be useful for general application config. */
     public setParameter(key: string, value: any): this {
         this.parameters[key] = value;
 
         return this;
     }
 
-    /** See {@link parameters}. */
+    /** Get a 'superglobal'. Can be useful for general application config. */
     public getParameter<T = any>(key: string): T {
         return this.parameters[key] as T;
     }
 
-    /** Registers a class as a service. */
+    /** 
+     * Registers a class as a service. 
+     * 
+     * @example
+     * container.register(LoggerService, [config.logLevel]);
+     * container.register(Database, [LoggerService]);
+     * 
+     * @param ctor The service to register - can be any class. 
+     * @param dependencies Dependencies (constructor parameters) of the service
+     * @param [lifetime=Lifetime.SHARED]
+     */
     public register<T extends ClassType<any>>(
         ctor: T, 
         dependencies: Dependencies<T>,
@@ -61,7 +77,14 @@ export class Container {
         return this;
     }
 
-    /** Registers a class as a singleton service. */
+    /** 
+     * Shortcut for {@link register} with {@link Lifetime.SHARED}. 
+     * 
+     * Registers a class as a singleton service.
+     * 
+     * @param ctor The service to register - can be any class. 
+     * @param dependencies Dependencies (constructor parameters) of the service
+     */
     public singleton<T extends ClassType<any>>(
         ctor: T, 
         dependencies: Dependencies<T>
@@ -71,7 +94,14 @@ export class Container {
         return this;
     }
 
-    /** Registers a class as a transient service. */
+    /** 
+     * Shortcut for {@link register} with {@link Lifetime.TRANSIENT}. 
+     * 
+     * Registers a class as a transient service.
+     * 
+     * @param ctor The service to register - can be any class. 
+     * @param dependencies Dependencies (constructor parameters) of the service
+     */
     public transient<T extends ClassType<any>>(
         ctor: T, 
         dependencies: Dependencies<T>
@@ -101,6 +131,12 @@ export class Container {
      * 
      * You may omit the 'dependencies' argument to match the 
      * constructor signature of the overridden class. 
+     * 
+     * @example
+     * container.transient(Foo, []);
+     * container.singleton(MyService, [Foo]);
+     * 
+     * container.override(MyService, OverrideClass);
      */
     public override<T extends ClassType<any>>(
         ctor: T,
@@ -130,6 +166,9 @@ export class Container {
      * 
      * Will throw a {@link ServiceNotFoundError} if the service was not 
      * registered via {@link register}.
+     * 
+     * @example
+     * const instance = container.get(MyClass);
      */
     public get<T>(ctor: ClassType<T>): T {
         return this.resolve(ctor, true) as T;
@@ -138,7 +177,8 @@ export class Container {
     /** 
      * Resolves an instance of the given class. 
      * 
-     * In strict mode, will throw a {@link ServiceNotFoundError}.
+     * @param ctor The service to resolve
+     * @param strict When strict, could throw a {@link ServiceNotFoundError}.
      */
     public resolve<T>(
         ctor: ClassType<T>, 

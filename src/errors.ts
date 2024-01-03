@@ -3,8 +3,11 @@ import { ClassType } from ".";
 /**
  * Thrown when a class references itself as a dependency - prevents infinite
  * loops. 
+ * 
+ * @category Errors
  */
 export class CyclicalDependencyError extends Error {
+    /** @hidden */
     constructor(ctor: ClassType<any>) {
         super(`Cyclical dependency for ${ctor.name}`);
     }
@@ -12,9 +15,12 @@ export class CyclicalDependencyError extends Error {
 
 /**
  * Thrown when a user tries to `get()` an instance from the container, before
- * having compiled the container via `build()`. 
+ * calling `build()`. 
+ * 
+ * @category Errors
  */
 export class ContainerNotResolvedError extends Error {
+    /** @hidden */
     constructor() {
         super('Container must be resolved first. Try using container.build() first.');
     }
@@ -22,8 +28,11 @@ export class ContainerNotResolvedError extends Error {
 
 /**
  * Thrown a user tries to `override()` a class when `build()` was already called.
+ * 
+ * @category Errors
  */
 export class ContainerOverrideUserError extends Error {
+    /** @hidden */
     constructor() {
         super('Container was already compiled. You can only call override() before build().');
     }
@@ -31,8 +40,11 @@ export class ContainerOverrideUserError extends Error {
 
 /**
  * Thrown when a service is not found by the container. 
+ * 
+ * @category Errors
  */
 export class ServiceNotFoundError extends Error {
+    /** @hidden */
     constructor(ctor: ClassType<any>) {
         super(`'${ctor.name}' is not a registered service. Did you forget to call 'container.register(${ctor.name})'? Or did you forget to load a bundle?`);
     }

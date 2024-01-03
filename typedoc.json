@@ -12,5 +12,19 @@
 
     "plugin": ["typedoc-material-theme"],
     "themeColor": "#ffffff",
-    "customCss": "./typedoc.css"
+    "customCss": "./typedoc.css",
+    
+    "categoryOrder": ["Container", "Bundles", "*", "Errors"],
+    
+    "sort": [
+        "source-order",
+        "visibility",
+        "required-first",
+        "alphabetical"
+    ],
+
+    "navigation": {
+        "includeCategories": true
+    }
+
 }
