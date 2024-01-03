@@ -133,10 +133,11 @@ export class Container {
      * constructor signature of the overridden class. 
      * 
      * @example
-     * container.transient(Foo, []);
-     * container.singleton(MyService, [Foo]);
+     * container.transient(Foo, []); // Foo is some service
+     * container.singleton(MyService, [Foo]); // MyService depends on Foo
      * 
-     * container.override(MyService, OverrideClass);
+     * container.transient(OverrideFoo, []); // Add an override service
+     * container.override(Foo, OverrideFoo); // MyService will now use OverrideFoo
      */
     public override<T extends ClassType<any>>(
         ctor: T,
