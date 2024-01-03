@@ -18,7 +18,7 @@ export enum Lifetime {
  * The static 'name' of a class, rather than an instance. 
  * E.g. `MyClass` instead of `new MyClass()`. 
  * 
- * @param <T> Any constructable class.
+ * @typeParam T Any constructable class.
  */
 export type ClassType<T> = { new (...args: any[]): T };
 
@@ -26,10 +26,11 @@ export type ClassType<T> = { new (...args: any[]): T };
  * A 'nice to read' alias for the depenency mapping. 
  * Can be T or the {@link ClassType} of T. 
  * 
- * @param <T> Any constructable class.
+ * @typeParam T Any constructable class.
  */
 export type DependsOn<T> = T | ClassType<T>;
 
+/** @hidden */
 type MapDependencies<T> = {
     [P in keyof T]: DependsOn<T[P]>
 };
@@ -38,7 +39,7 @@ type MapDependencies<T> = {
  * Get the dependency types of a class, based on it's 
  * {@link ConstructorParameters}.
  * 
- * @param <T> Any {@link ClassType}. 
+ * @typeParam T Any {@link ClassType}. 
  */
 export type Dependencies<T extends ClassType<any>> 
     = MapDependencies<ConstructorParameters<T>>
@@ -55,7 +56,7 @@ export interface BundleInterface<T extends object> {
 /** 
  * Provides type hints for a given {@link BundleInterface}. 
  * 
- * @param <T> Inferred based on the passed {@link BundleInterface}.
+ * @typeParam T Inferred based on the passed {@link BundleInterface}.
  */
 export type BundleConfigType<T> 
     = T extends BundleInterface<infer X> ? X : never;

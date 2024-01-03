@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+html, 
+body,
+:root,
+:root[data-theme="light"],
+:root[data-theme="dark"] {
+    --font-sans: "Roboto", sans-serif;
+    --font-mono: monospace;
+}
