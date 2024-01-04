@@ -9,17 +9,18 @@ Minimal Dependency Injection container, written in Typescript.
 - Optional [extension bundle system](#container-extension-bundles): easily create 'feature toggles' for your application.
 
 ## Why?
-To prevent spaghetti code (i.e. enforce [SOLID](https://en.m.wikipedia.org/wiki/SOLID) / reduce [tight coupling](https://en.m.wikipedia.org/wiki/Coupling_(computer_programming))), without inflating the codebase too much. 
+To prevent spaghetti code (i.e. enforce [SOLID](https://en.m.wikipedia.org/wiki/SOLID) 
+/ reduce [tight coupling](https://en.m.wikipedia.org/wiki/Coupling_(computer_programming))), 
+without inflating the codebase too much. Some Javascript DI solutions tend to use decorators (which are experimental) or `reflect-metadata` (extra package), or 
+have other features that [I didn't like](https://en.m.wikipedia.org/wiki/Preference). 
 
-You can achieve the most basic form of DI by constructing objects outside of 
-classes and just passing them wherever they are required. Alternative Javascript 
-DI solutions tend to use decorators (which are experimental) or `reflect-metadata` 
-(extra package), which [I didn't like](https://en.m.wikipedia.org/wiki/Preference). 
+You can achieve the most [basic form of DI](https://en.m.wikipedia.org/wiki/Dependency_injection#Assembly) by using some kind of service layer to 
+construct classes and provide their dependencies.
 
-This module simply relies on Typescript and native Javascript features instead. 
-It gives full control to build your own application container and wire as you 
-wish. When keep your services and bundles [small and managable](https://en.m.wikipedia.org/wiki/Single_responsibility_principle), 
-your code / coupling will be much easier to maintain. 
+This module relies on native Typescript / Javascript to enable (manual) DI. 
+It gives full control to build your own application container and wire services 
+as you desire. When keeping your services and bundles [small and managable](https://en.m.wikipedia.org/wiki/Single_responsibility_principle), your code / coupling will 
+be better and easier to maintain. 
 
 For a concrete usecase, see the [basic example app](https://github.com/markeasting/dependency-injection/blob/master/test/example.spec.ts). 
 
