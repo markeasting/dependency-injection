@@ -1,4 +1,4 @@
-import { ContainerOverrideUserError, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError } from "./errors";
+import { ContainerOverrideUserError, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError, ParameterNotFoundError } from "./errors";
 
 import { Lifetime, ClassType, Dependencies } from './types';
 
@@ -42,8 +42,16 @@ export class Container {
         return this;
     }
 
-    /** Get a 'superglobal'. Can be useful for general application config. */
-    public getParameter<T = any>(key: string): T {
+    /** 
+     * Get a 'superglobal'. Can be useful for general application config. 
+     * 
+     * @param strict When strict, can throw a {@link ParameterNotFoundError}.
+     */
+    public getParameter<T = any>(key: string, strict = true): T {
+        if (strict && !this.parameters[key]) {
+            throw new ParameterNotFoundError(key);
+        }
+
         return this.parameters[key] as T;
     }
 
@@ -129,15 +137,21 @@ export class Container {
     /** 
      * Overrides a service with another concrete implementation. 
      * 
-     * You may omit the 'dependencies' argument to match the 
-     * constructor signature of the overridden class. 
+     * You may omit the 'dependencies' argument to match the constructor 
+     * signature of the overridden class. 
      * 
      * @example
-     * container.transient(Foo, []); // Foo is some service
-     * container.singleton(MyService, [Foo]); // MyService depends on Foo
+     * class IFoo {
+     *     someMethod(): void {}
+     * }
      * 
-     * container.transient(OverrideFoo, []); // Add an override service
-     * container.override(Foo, OverrideFoo); // MyService will now use OverrideFoo
+     * // First register the default implementation / 'base class' for IFoo.
+     * container.transient(IFoo, []); 
+     * 
+     * container.singleton(MyService, [IFoo]); // MyService depends on IFoo
+     * 
+     * container.transient(ConcreteFoo, []);   // Register an override service
+     * container.override(IFoo, ConcreteFoo);  // ConcreteFoo will be passed to MyService
      */
     public override<T extends ClassType<any>>(
         ctor: T,
@@ -179,12 +193,9 @@ export class Container {
      * Resolves an instance of the given class. 
      * 
      * @param ctor The service to resolve
-     * @param strict When strict, could throw a {@link ServiceNotFoundError}.
+     * @param strict When strict, can throw a {@link ServiceNotFoundError}.
      */
-    public resolve<T>(
-        ctor: ClassType<T>, 
-        strict = true
-    ): T|undefined {
+    public resolve<T>(ctor: ClassType<T>, strict = true): T|undefined {
         if (!this.#compiled) {
             throw new ContainerNotResolvedError();
         }

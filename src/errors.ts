@@ -39,6 +39,18 @@ export class ContainerOverrideUserError extends Error {
 }
 
 /**
+ * Thrown when a parameter is not found. 
+ * 
+ * @category Errors
+ */
+export class ParameterNotFoundError extends Error {
+    /** @hidden */
+    constructor(param: string) {
+        super(`'${param}' is not defined as a parameter. Please define it using 'container.setParameter('${param}', <value>)'.`);
+    }
+}
+
+/**
  * Thrown when a service is not found by the container. 
  * 
  * @category Errors
@@ -48,4 +60,4 @@ export class ServiceNotFoundError extends Error {
     constructor(ctor: ClassType<any>) {
         super(`'${ctor.name}' is not a registered service. Did you forget to call 'container.register(${ctor.name})'? Or did you forget to load a bundle?`);
     }
-};
+}

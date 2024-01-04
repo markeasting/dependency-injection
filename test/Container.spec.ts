@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { ContainerOverrideUserError, Container, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError, assert } from "../src";
+import { ContainerOverrideUserError, Container, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError, assert, ParameterNotFoundError } from "../src";
 
 const TEST_VALUE1 = 69;
 const TEST_VALUE2 = 42;
@@ -45,6 +45,22 @@ test('setParameter()', () => {
 
     expect(container.getParameter<number>('myvar')).toStrictEqual(TEST_VALUE1);
     expect(container.getParameter<boolean>('someother')).toStrictEqual(true);
+});
+
+test('getParameter() - throw if parameter was not found', () => {
+    const container = new Container();
+    // container.setParameter('myvar', TEST_VALUE1); // Noramlly required
+    
+    expect(() => { 
+        container.getParameter('myvar'); 
+    }).toThrow(
+        new ParameterNotFoundError('myvar')
+    );
+
+    // Don't throw if strict mode is off
+    expect(() => { 
+        container.getParameter('myvar', false); 
+    }).not.toThrow();
 });
 
 test('register()', () => {
