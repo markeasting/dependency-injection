@@ -198,15 +198,15 @@ import type { BundleInterface } from '@wildsea/dependency-injection'
 /* Define the bundle configuration class */
 export class MyBundleConfig {
     debug: boolean;
-    graphics: Partial<GraphicsConfig>;
+    myService: Partial<MyServiceConfig>;
 }
 
 /* Create the bundle definition */
 export class MyBundle implements BundleInterface<MyBundleConfig> {
 
     constructor(
-        public timer: Timer,
-        public graphics: GraphicsManager,
+        public api: ApiManager,
+        public service: MyService,
     ) {}
 
     /* The configure() method wires the services in this bundle */
@@ -215,12 +215,15 @@ export class MyBundle implements BundleInterface<MyBundleConfig> {
         /* Apply configuration overrides */
         const config = {...new MyBundleConfig(), ...overrides}; 
 
-        /* Register the services in this bundle */
-        container.transient(Timer, []);
-        container.singleton(GraphicsManager, [Timer, config.graphics]);
+        /* Get some global parameters (could also be passed via config, based on the scope) */
+        const apiKey = container.getParameter('apiKey');
+
+        /* Wire the services in this bundle */
+        container.transient(ApiManager, [apiKey]);
+        container.singleton(MyService, [ApiManager, config.myService]);
 
         /* Then register the bundle itself */
-        container.register(MyBundle, [Timer, GraphicsManager]);
+        container.register(MyBundle, [Timer, MyService]);
     }
 }
 ```
@@ -254,14 +257,14 @@ container.addExtension(MyBundle, {
 ```ts
 import { MyBundle } from "."
 
-/* You must call `build` first. This will wire the services. */
+/* You must call `build` first. */
 container.build(); 
 
 const ext = container.getExtension(MyBundle); 
 
 if (ext) {
-    const bundleTimer = ext.timer;          /* instanceof 'Timer' */
-    const bundleGraphics = ext.graphics;    /* instanceof 'GraphicsManager' */
+    const instance1 = ext.api;      /* instanceof 'ApiManager' */
+    const instance2 = ext.service;  /* instanceof 'MyService' */
 }
 ```
 

@@ -14,7 +14,7 @@
     "themeColor": "#ffffff",
     "customCss": "./typedoc.css",
     
-    "categoryOrder": ["Container", "Bundles", "*", "Errors"],
+    "categoryOrder": ["Container", "Extension Bundles", "*", "Errors"],
     
     "sort": [
         "source-order",

@@ -46,6 +46,15 @@ export class ExtendableContainer extends Container {
     
     /** 
      * Retrieves an extension bundle from the container. 
+     * 
+     * @example
+     * // Basic usecase 
+     * import { MyBundle } from '.';
+     * const ext = container.getExtension(MyBundle); 
+     * 
+     * // Or use `import type` to aid tree-shaking
+     * import type { MyBundle } from '.';
+     * const ext = container.getExtension<MyBundle>('MyBundle'); 
      */
     public getExtension<T extends BundleInterface<any>>(
         bundle: ClassType<T> | string

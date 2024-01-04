@@ -66,7 +66,7 @@ export type Dependencies<T extends ClassType<any>>
 /**
  * Interface for extension bundles. 
  * 
- * @category Bundles
+ * @category Extension Bundles
  * @typeParam T Refers to the type of bundle configuration. 
  *            See {@link BundleConfigType}. 
  * 
@@ -88,11 +88,19 @@ export interface BundleInterface<T extends object> {
      * @param overrides Bundle configuration overrides.
      * 
      * @example 
-     * const config = {...new MyBundleConfig(), ...overrides}
      * 
-     * container.transient(LoggerService, [config.logLevel]);
-     * container.singleton(Database, [LoggerService]);
-     * container.register(MyBundle, [Database]); 
+     * configure(overrides: Partial<MyBundleConfig>): void {
+     *      const config = {...new MyBundleConfig(), ...overrides}
+     *      
+     *      // Get some parameter, can also be passed via config
+     *      const db_uri = container.getParameter('db_uri');
+     *      
+     *      // Wire the services in this bundle 
+     *      container.transient(LoggerService, [config.logLevel]);
+     *      container.singleton(Database, [LoggerService, db_uri]);
+     * 
+     *      container.register(MyBundle, [Database]); // Register 'self'
+     * }
      */
     configure(overrides: T): void;
 }
@@ -100,7 +108,7 @@ export interface BundleInterface<T extends object> {
 /** 
  * Provides type hints for a given {@link BundleInterface}. 
  * 
- * @category Bundles
+ * @category Extension Bundles
  * @typeParam T Inferred based on the passed {@link BundleInterface}.
  */
 export type BundleConfigType<T> 
