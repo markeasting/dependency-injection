@@ -2,10 +2,12 @@
 import { expect, spyOn, test } from "bun:test"; const c = spyOn(console, 'log');
 
 /* Containers.ts */
+import { ExtendableContainer } from "../src";
+
 const container = new ExtendableContainer();
 const container2 = new ExtendableContainer();
 
-/* Logger.ts */
+/* Logger.ts ---------------------------------------------------------------- */
 import type { BundleInterface } from '../src';
 
 enum LogLevel {
@@ -22,7 +24,8 @@ class LoggerService {
     }
 }
 
-/* Database.ts */
+/* Database.ts -------------------------------------------------------------- */
+
 class Database {
 
     constructor(public logger: LoggerService) {}
@@ -32,8 +35,7 @@ class Database {
     }
 }
 
-/* MyBundle.ts */
-import { Container, ExtendableContainer } from "../src";
+/* MyBundle.ts -------------------------------------------------------------- */
 
 class MyBundleConfig {
     logLevel: LogLevel = LogLevel.WARNING;
@@ -54,7 +56,7 @@ class MyBundle implements BundleInterface<MyBundleConfig> {
     }
 }
 
-/* BaseApp.ts */
+/* BaseApp.ts --------------------------------------------------------------- */
 class BaseApp {
 
     database?: Database;
@@ -76,20 +78,19 @@ class BaseApp {
         if (myBundle) {
             this.database = myBundle.database; 
             // Or alternatively, `this.database = container1.get(Database)`
-
-            this.database.connect();
         }
+    }
+
+    init() {
+        this.database?.connect();
     }
 }
 
-/**
- * Test case / example
- */
+/* Test case / example ------------------------------------------------------ */
 test('Application entrypoint', () => {
-
-    /** 
-     * main.ts - This would be your application entrypoint.
-     */
+    
+    /* Your application entrypoint - main.ts or some bootstrap function. */
+    
     container.addExtension(MyBundle, {
         logLevel: LogLevel.DEBUG
     });
@@ -97,16 +98,19 @@ test('Application entrypoint', () => {
     container.singleton(BaseApp, []);
     container.build();
 
-    const app = container.get(BaseApp); // The app is now initialized and running. 
-
     /* Thats it! */
+    
+    const app = container.get(BaseApp); // The app instance is now ready. 
+
+    app.init();
 
     /* Test cases */
     expect(app).toBeInstanceOf(BaseApp);
     expect(app.database).toBeInstanceOf(Database);
     expect(app.database?.logger).toBeInstanceOf(LoggerService);
 
-    expect(c).toHaveBeenCalledWith('DEBUG - Success!');
+    expect(c).toHaveBeenCalledTimes(1);
+    expect(c.mock.lastCall).toEqual(['DEBUG - Success!']);
 });
 
 /**
