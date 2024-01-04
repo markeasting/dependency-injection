@@ -3,12 +3,13 @@ Minimal Dependency Injection container, written in Typescript.
 
 ## Features
 - No additional npm package requirements.
-- No autowiring, you need to build and configure your own application. 
-- Typescript has your back when you wire dependencies.
-- Extension bundle system: easily create 'feature toggles' for your application.
+- No autowiring, you need to [build and configure](#registering-services) your own application. 
+- [Typescript has your back](#type-hinting-for-wiring) when you wire dependencies.
+- Supports basic [overriding / mocking](#overriding--mocking-services) of services.
+- Optional [extension bundle system](#container-extension-bundles): easily create 'feature toggles' for your application.
 
 ## Why?
-To prevent spaghetti code (e.g. enforce [SOLID](https://en.m.wikipedia.org/wiki/SOLID) / reduce [tight coupling](https://en.m.wikipedia.org/wiki/Coupling_(computer_programming))), without inflating the codebase too much. 
+To prevent spaghetti code (i.e. enforce [SOLID](https://en.m.wikipedia.org/wiki/SOLID) / reduce [tight coupling](https://en.m.wikipedia.org/wiki/Coupling_(computer_programming))), without inflating the codebase too much. 
 
 You can achieve the most basic form of DI by constructing objects outside of 
 classes and just passing them wherever they are required. Alternative Javascript 
@@ -39,7 +40,7 @@ in your own project.
 
 # Usage guide
 
-### Create the container
+## Create a container
 
 ```ts
 import { Container } from "@wildsea/dependency-injection";
@@ -53,9 +54,12 @@ Or import a globally available container instance directly:
 import { container } from "@wildsea/dependency-injection";
 ```
 
-### Create and register a service
-Services are 'shared' by default: you will always receive the same instance 
-when it is injected or queried by the container.
+## Registering services
+Simply register your class as a service by calling `register()`. 
+
+Services are 'shared' by default - you will always receive the same instance 
+when it is injected or queried by the container. See below for more lifetime 
+options.
 
 ```ts
 /* Service with zero dependencies  */
@@ -69,60 +73,46 @@ class Foo {
 container.register(Foo, []);
 ```
 
-### Object lifecycle: shared / singleton or transient
-By default, `register()` will add a shared service 
-- You may pass the lifetime as the third argument. 
+#### Shared and transient services
+You can pass the object lifetime to the `register()` method as the third 
+argument. By default, it will register a *shared* service.
 
-Two shortcuts for this are `singleton()` and `transient()`: 
+Some shortcuts for setting the lifetime are `singleton()` and `transient()`: 
 
 ```ts
-container.singleton(...);   // Singleton / shared service: each instance is the same.
+container.singleton(...);   // Shared service: each instance is the same.
 container.transient(...);   // Transient service: each instance is unique. 
 ```
 
-### Define a service with dependencies
-In this example, `MyClass` is a service that depends upon 
-an instance of `Foo` (registered in the previous section). 
+#### Defining service dependencies
+In this example, `MyClass` is a service that depends upon an instance of `Foo`:
 
 ```ts
-import { Foo } from '.'
+import { Foo } from './Foo';
 
 class MyClass {
 
-    /* MyClass depends on `Foo` */
-    constructor(
-        public foo: Foo
-    ) {}
+    /* MyClass depends on an instance of `Foo` */
+    constructor(public foo: Foo) {}
 
     myMethod() {
         console.log(this.foo.getValue()); // Will log '42'
     }
 }
 
-/* Register the service and wire `Foo` to be injected. */
+/** 
+ * Register the services. 
+ * 1) Register 'Foo'
+ * 2) Wire `Foo` to be injected into MyClass
+ */
+container.register(Foo, []); 
 container.register(MyClass, [Foo]); 
 ```
 
-### Get an instance from the container
-Before getting instances, you must first call `build`. 
-This will wire the services.
-
-```ts
-container.build(); 
-```
-You can request an instance via `get()`. Only when this is called, the 
-dependencies will be resolved and injected (lazy initialization).
-
-```ts
-const instance = container.get(MyClass); 
-
-console.log(instance.foo.getValue()); // Returns '42' from the 'Foo' dependency (see above)
-```
-
-### Type hinting for wiring / injecting services
-Typescript will yell at you when you pass the wrong dependencies. 
-The container creatively uses Typescript's [ConstructorParameters](https://www.typescriptlang.org/docs/handbook/utility-types.html#constructorparameterstype) 
-utility type to resolve this. 
+#### Type hinting for wiring
+Typescript will yell at you when you pass the wrong dependencies. The container 
+creatively uses Typescript's [ConstructorParameters](https://www.typescriptlang.org/docs/handbook/utility-types.html#constructorparameterstype) utility type to provide type 
+hinting. 
 
 ```ts
 container.register(MyClass, [Foo]); // Everything is OK. 
@@ -130,7 +120,7 @@ container.register(MyClass, [Foo]); // Everything is OK.
 container.register(MyClass, [Baz, 123]); // Error! MyClass requires Foo.
 ```
 
-### Passing non-injectables (e.g. primitives and plain objects)
+#### Passing primitives (non-injectables)
 You may also pass things like objects or primitives (which aren't or cannot be 
 registered services). These must be constructed when registering the class: 
 
@@ -152,12 +142,53 @@ class SomeClass {
 container.register(SomeClass, [new SomeConfig(), 1234]); 
 ```
 
-# Container extensions
+## Getting service instances
+You can request a service instance via `get()`. Only when this is called, the 
+dependencies will be resolved and injected (lazy initialization).
+
+Before using this, you must first compile the container by calling `build()`. 
+This will initialize the container (i.e. apply service overrides and configure 
+bundles):
+
+```ts
+container.build(); 
+```
+Then you can `get()` an instance by passing the name of a class:
+
+```ts
+const instance = container.get(MyClass); 
+
+console.log(instance.foo.getValue()); // Returns '42' (see above)
+```
+
+## Overriding / mocking services
+You can override the implementation of a service by using `override()`.
+
+Javascript does not support interfaces (i.e. you cannot pass a TS 
+interface by value). Therefore, you should first `register()` a 'base class' as 
+a default implementation, after which you may override it using `override()`. 
+
+```ts
+/* Since you cannot pass TS interfaces in the JS world, IFoo must be a `class`. */
+class IFoo {
+    someMethod(): void {}
+}
+
+/* First register the default implementation / 'base class' for IFoo. */
+container.transient(IFoo, []); 
+
+container.singleton(MyService, [IFoo]); // MyService depends on IFoo
+
+container.transient(ConcreteFoo, []);   // Register an override service
+container.override(IFoo, ConcreteFoo);  // ConcreteFoo will be passed to MyService
+```
+
+## Container extension bundles
 You can add your own extension bundles to the container. You may use this 
 system to add 'feature toggles' in your application. This is loosely based on 
 the way Symfony handles bundles.
 
-### Create your extension bundle
+### Define an extension bundle
 
 ```ts
 import { container } from "@wildsea/dependency-injection";
@@ -194,7 +225,7 @@ export class MyBundle implements BundleInterface<MyBundleConfig> {
 }
 ```
 
-### Register and load the extension
+### Register an extension bundle
 You may use the globally available `container` instance, 
 since this has extensions enabled by default. 
 
@@ -219,7 +250,7 @@ container.addExtension(MyBundle, {
 });
 ```
 
-### Get an extension from the container 
+### Get an extension 
 ```ts
 import { MyBundle } from "."
 
