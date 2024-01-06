@@ -69,8 +69,12 @@ export class Container {
      * constructor argument. 
      * 
      * @example
-     * container.register(LoggerService, [config.logLevel]);
-     * container.register(Database, [LoggerService]);
+     * 
+     * // Logger depends on some log level constant
+     * container.register(LoggerService, [LogLevel.DEBUG]);
+     * 
+     * // Database depends on Logger
+     * container.register(Database, [LoggerService]); 
      * 
      * @param ctor The service to register - can be any class. 
      * @param dependencies Dependencies (constructor parameters) of the service
@@ -100,9 +104,9 @@ export class Container {
     }
 
     /** 
-     * Shortcut for {@link register} with {@link Lifetime.SHARED}. 
-     * 
      * Registers a class as a singleton service.
+     * 
+     * Shortcut for {@link register} with {@link Lifetime.SHARED}. 
      * 
      * @param ctor The service to register - can be any class. 
      * @param dependencies Dependencies (constructor parameters) of the service
@@ -117,9 +121,9 @@ export class Container {
     }
 
     /** 
-     * Shortcut for {@link register} with {@link Lifetime.TRANSIENT}. 
-     * 
      * Registers a class as a transient service.
+     * 
+     * Shortcut for {@link register} with {@link Lifetime.TRANSIENT}. 
      * 
      * @param ctor The service to register - can be any class. 
      * @param dependencies Dependencies (constructor parameters) of the service
@@ -191,7 +195,7 @@ export class Container {
     }
 
     /** 
-     * Retrieves a service from the container with resolved dependencies. 
+     * Retrieves a service from the container, and resolves it's dependencies. 
      * 
      * Will throw a {@link ServiceNotFoundError} if the service was not 
      * registered via {@link register}.
