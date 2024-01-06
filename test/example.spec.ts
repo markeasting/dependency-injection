@@ -1,14 +1,13 @@
 /* Test imports, you can ignore these */
 import { expect, spyOn, test } from "bun:test"; const c = spyOn(console, 'log');
 
-/* Containers.ts */
+/* Containers.ts ------------------------------------------------------------ */
 import { ExtendableContainer } from "../src";
 
 const container = new ExtendableContainer();
 const container2 = new ExtendableContainer();
 
 /* Logger.ts ---------------------------------------------------------------- */
-import type { BundleInterface } from '../src';
 
 enum LogLevel {
     WARNING = 'WARNING',
@@ -28,20 +27,24 @@ class LoggerService {
 
 class Database {
 
-    constructor(public logger: LoggerService) {}
+    constructor(
+        public dbUri: string,
+        public logger: LoggerService
+    ) {}
 
     connect() {
         this.logger.log('Success!');
     }
 }
 
-/* MyBundle.ts -------------------------------------------------------------- */
+/* DbBundle.ts -------------------------------------------------------------- */
+import type { BundleInterface } from '../src';
 
 class MyBundleConfig {
-    logLevel: LogLevel = LogLevel.WARNING;
+    dbUri: string;
 }
 
-class MyBundle implements BundleInterface<MyBundleConfig> {
+class DbBundle implements BundleInterface<MyBundleConfig> {
 
     constructor(public database: Database) {}
 
@@ -49,10 +52,15 @@ class MyBundle implements BundleInterface<MyBundleConfig> {
 
         const config = {...new MyBundleConfig(), ...overrides};
 
-        container.transient(LoggerService, [config.logLevel]);
-        container.singleton(Database, [LoggerService]);
+        // Get some container parameter (could also be passed via config)
+        const logLevel = container.getParameter('logger.loglevel');
+        
+        // Wire the services in this bundle 
+        container.transient(LoggerService, [logLevel]);
+        container.singleton(Database, [config.dbUri, LoggerService]);
 
-        container.register(MyBundle, [Database]);
+        // Register 'self'
+        container.register(DbBundle, [Database]);
     }
 }
 
@@ -73,11 +81,11 @@ class BaseApp {
          * Example of a feature toggle: 
          * we can only use the Database feature from MyBundle if added it. 
          */
-        const myBundle = container.getExtension<MyBundle>('MyBundle');
+        const bundle = container.getExtension<DbBundle>('DbBundle');
 
-        if (myBundle) {
-            this.database = myBundle.database; 
-            // Or alternatively, `this.database = container1.get(Database)`
+        if (bundle) {
+            this.database = bundle.database; 
+            // Or alternatively, `this.database = container.get(Database)`
         }
     }
 
@@ -90,9 +98,10 @@ class BaseApp {
 test('Application entrypoint', () => {
     
     /* Your application entrypoint - main.ts or some bootstrap function. */
-    
-    container.addExtension(MyBundle, {
-        logLevel: LogLevel.DEBUG
+    container.setParameter('logger.loglevel', LogLevel.DEBUG);
+
+    container.addExtension(DbBundle, {
+        dbUri: 'mongodb://...'
     });
 
     container.singleton(BaseApp, []);

@@ -216,7 +216,7 @@ export class MyBundle implements BundleInterface<MyBundleConfig> {
         /* Apply configuration overrides */
         const config = {...new MyBundleConfig(), ...overrides}; 
 
-        /* Get some global parameters (could also be passed via config, based on the scope) */
+        /* Get some global parameters (could also be passed via config, depends on the parameter scope) */
         const apiKey = container.getParameter('apiKey');
 
         /* Wire the services in this bundle */
@@ -292,10 +292,7 @@ const ext = container.getExtension<MyBundle>('MyBundle');
 You can check out the basic application example [here](https://github.com/markeasting/dependency-injection/blob/master/test/example.spec.ts). 
 
 ```ts
-const container = new ExtendableContainer();
-
 /* Logger.ts */
-import type { BundleInterface } from '../src';
 
 enum LogLevel {
     WARNING = 'WARNING',
@@ -304,9 +301,7 @@ enum LogLevel {
 
 class LoggerService {
 
-    constructor(
-        public logLevel: LogLevel
-    ) {}
+    constructor(public logLevel: LogLevel) {}
 
     log(string: string) {
         console.log(`${this.logLevel} - ${string}`);
@@ -314,9 +309,11 @@ class LoggerService {
 }
 
 /* Database.ts */
+
 class Database {
 
     constructor(
+        public dbUri: string,
         public logger: LoggerService
     ) {}
 
@@ -325,14 +322,14 @@ class Database {
     }
 }
 
-/* MyBundle.ts */
-import { Container, ExtendableContainer } from "../src";
+/* DbBundle.ts */
+import type { BundleInterface } from '../src';
 
 class MyBundleConfig {
-    logLevel: LogLevel = LogLevel.WARNING;
+    dbUri: string;
 }
 
-class MyBundle implements BundleInterface<MyBundleConfig> {
+class DbBundle implements BundleInterface<MyBundleConfig> {
 
     constructor(public database: Database) {}
 
@@ -340,10 +337,15 @@ class MyBundle implements BundleInterface<MyBundleConfig> {
 
         const config = {...new MyBundleConfig(), ...overrides};
 
-        container.transient(LoggerService, [config.logLevel]);
-        container.singleton(Database, [LoggerService]);
+        // Get some container parameter (could also be passed via config)
+        const logLevel = container.getParameter('logger.loglevel');
+        
+        // Wire the services in this bundle 
+        container.transient(LoggerService, [logLevel]);
+        container.singleton(Database, [config.dbUri, LoggerService]);
 
-        container.register(MyBundle, [Database]);
+        // Register 'self'
+        container.register(DbBundle, [Database]);
     }
 }
 
@@ -364,15 +366,42 @@ class BaseApp {
          * Example of a feature toggle: 
          * we can only use the Database feature from MyBundle if added it. 
          */
-        const myBundle = container.getExtension<MyBundle>('MyBundle');
+        const bundle = container.getExtension<DbBundle>('DbBundle');
 
-        if (myBundle) {
-            this.database = myBundle.database; 
-            // Or alternatively, `this.database = container1.get(Database)`
-
-            this.database.connect();
+        if (bundle) {
+            this.database = bundle.database; 
+            // Or alternatively, `this.database = container.get(Database)`
         }
+    }
+
+    init() {
+        this.database?.connect();
     }
 }
 
+/** 
+ * Your application entrypoint - main.ts / some bootstrap function.
+ */
+function application_bootstrap() {
+    
+    container.setParameter('logger.loglevel', LogLevel.DEBUG);
+
+    container.addExtension(DbBundle, {
+        dbUri: 'mongodb://...'
+    });
+
+    container.addExtension(DbBundle, {
+        logLevel: LogLevel.DEBUG
+    });
+
+    container.singleton(BaseApp, []);
+    container.build();
+
+    /* Thats it! */
+    
+    const app = container.get(BaseApp); // The app instance is now ready. 
+
+    app.init(); // Database will run connect() and log 'Success' 
+
+}
 ```

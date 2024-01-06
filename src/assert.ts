@@ -1,11 +1,10 @@
 /**
- * Check whether or not some dependencies were passed (in runtime). Use in the constructor of a class, e.g. 
+ * Check whether or not some dependencies were passed (in runtime). 
  * 
- * ```
+ * @example
  * constructor(private dep1: Dep1, private dep2: Dep2) {
  *      assert(dep1, dep2);
  * }
- * ```
  * 
  * @TODO Skip this entire check when building for production
  */

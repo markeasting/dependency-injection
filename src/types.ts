@@ -83,23 +83,28 @@ export type Dependencies<T extends ClassType<any>>
 export interface BundleInterface<T extends object> {
 
     /**
-     * In the configure method, you can 'wire' the services inside your bundle. 
+     * In this method, you can 'wire' the services that your bundle provides. 
      *  
      * @param overrides Bundle configuration overrides.
      * 
      * @example 
      * 
+     * // Let's say that this bundle provides a `Database` and `DTO` class. 
      * configure(overrides: Partial<MyBundleConfig>): void {
+     * 
+     *      // Merge bundle configuration with the given defaults and overrides
      *      const config = {...new MyBundleConfig(), ...overrides}
      *      
-     *      // Get some parameter, can also be passed via config
+     *      // Get some container parameter (could also be passed via config)
      *      const db_uri = container.getParameter('db_uri');
      *      
      *      // Wire the services in this bundle 
      *      container.transient(LoggerService, [config.logLevel]);
-     *      container.singleton(Database, [LoggerService, db_uri]);
+     *      container.singleton(Database, [db_uri, LoggerService]);
+     *      container.singleton(SomeDTO, [Database]);
      * 
-     *      container.register(MyBundle, [Database]); // Register 'self'
+     *      // Register 'self'
+     *      container.register(MyBundle, [Database, SomeDTO]); 
      * }
      */
     configure(overrides: T): void;

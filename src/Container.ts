@@ -5,12 +5,16 @@ import { Lifetime, ClassType, Dependencies } from './types';
 /**
  * Minimal Dependency Injection container. 
  * 
- * The main point of this container is to expose the dependencies 
- * of (sub)systems more explicitely. 
+ * @example
+ * import { Container } from "@wildsea/dependency-injection";
  * 
- * Other DI solutions use decorators (which are experimental) or 
- * `reflect-metadata` (extra package). This package heavily relies on 
- * Typescript and native Javascript features instead. 
+ * const container = new Container();
+ * 
+ * // Or import a globally available container instance directly:
+ * import { container } from "@wildsea/dependency-injection";
+ * 
+ * @example
+ * 
  * 
  * @category Container
  */
