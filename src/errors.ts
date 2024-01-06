@@ -1,7 +1,20 @@
 import { ClassType } from ".";
 
 /**
- * Thrown when a class references itself as a dependency - prevents infinite
+ * Thrown when a service was registered with the wrong number of constructor 
+ * arguments. 
+ * 
+ * @category Errors
+ */
+export class ArgumentCountError extends Error {
+    /** @hidden */
+    constructor(ctor: ClassType<any>, passedDepCount: number) {
+        super(`[Container] '${ctor.name}' requires ${ctor.length} argument(s), ${passedDepCount} given. \n\nPlease check which dependencies were passed to '${ctor.name}'.\n`);
+    }
+}
+
+/**
+ * Thrown when a class requires itself as a dependency - prevents infinite
  * loops. 
  * 
  * @category Errors
@@ -9,7 +22,7 @@ import { ClassType } from ".";
 export class CyclicalDependencyError extends Error {
     /** @hidden */
     constructor(ctor: ClassType<any>) {
-        super(`Cyclical dependency for ${ctor.name}`);
+        super(`[Container] Cyclical dependency for '${ctor.name}'.`);
     }
 }
 
@@ -22,19 +35,20 @@ export class CyclicalDependencyError extends Error {
 export class ContainerNotResolvedError extends Error {
     /** @hidden */
     constructor() {
-        super('Container must be resolved first. Try using container.build() first.');
+        super('[Container] Container must be resolved first. Try using container.build() first.');
     }
 }
 
 /**
- * Thrown a user tries to `override()` a class when `build()` was already called.
+ * Thrown a user tries to `override()` a class when `build()` was 
+ * already called.
  * 
  * @category Errors
  */
-export class ContainerOverrideUserError extends Error {
+export class OverrideUserError extends Error {
     /** @hidden */
     constructor() {
-        super('Container was already compiled. You can only call override() before build().');
+        super('[Container] You can only call override() before build().');
     }
 }
 
@@ -46,7 +60,7 @@ export class ContainerOverrideUserError extends Error {
 export class ParameterNotFoundError extends Error {
     /** @hidden */
     constructor(param: string) {
-        super(`'${param}' is not defined as a parameter. Please define it using 'container.setParameter('${param}', <value>)'.`);
+        super(`[Container] Parameter not defined: '${param}'.\n\nTry using "setParameter('${param}', <value>)".\n`);
     }
 }
 
@@ -58,6 +72,6 @@ export class ParameterNotFoundError extends Error {
 export class ServiceNotFoundError extends Error {
     /** @hidden */
     constructor(ctor: ClassType<any>) {
-        super(`'${ctor.name}' is not a registered service. Did you forget to call 'container.register(${ctor.name})'? Or did you forget to load a bundle?`);
+        super(`[Container] '${ctor.name}' is not a registered service. \n\n- Did you forget to register the service?\n- Did you forget to load an extension bundle that provides this service?\n`);
     }
 }

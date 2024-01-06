@@ -1,4 +1,4 @@
-import { ContainerOverrideUserError, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError, ParameterNotFoundError } from "./errors";
+import { OverrideUserError, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError, ParameterNotFoundError, ArgumentCountError } from "./errors";
 
 import { Lifetime, ClassType, Dependencies } from './types';
 
@@ -62,6 +62,12 @@ export class Container {
     /** 
      * Registers a class as a service. 
      * 
+     * Throws {@link ArgumentCountError} if the given dependencies do not match 
+     * the required constructor arguments. 
+     * 
+     * Throws {@link CyclicalDependencyError} if there is a self-referencing 
+     * constructor argument. 
+     * 
      * @example
      * container.register(LoggerService, [config.logLevel]);
      * container.register(Database, [LoggerService]);
@@ -77,6 +83,10 @@ export class Container {
     ): this {
 
         const deps = dependencies as any[];
+
+        if (ctor.length !== deps.length) {
+            throw new ArgumentCountError(ctor, deps.length);
+        }
 
         if (deps.includes(ctor)) {
             throw new CyclicalDependencyError(ctor);
@@ -163,7 +173,7 @@ export class Container {
         dependencies?: Dependencies<T>
     ): this {
         if (this.#compiled) {
-            throw new ContainerOverrideUserError;
+            throw new OverrideUserError;
         }
         this.services.set(ctor, null);
         this.overides.set(ctor, overrideCtor);
