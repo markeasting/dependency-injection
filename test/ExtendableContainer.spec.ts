@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { BundleInterface, ExtendableContainer } from "../src";
+import { BundleInterface, ExtendableContainer, ParameterNotFoundError } from "../src";
 
 const TEST_VALUE_BOOL = true;
 const TEST_VALUE1 = 69;
@@ -18,6 +18,31 @@ class MyBundleConfig {
     debug = TEST_VALUE_BOOL;
     someoverride = -1; // Will be overridden by a test case
 }
+
+test('setParameter()', () => {
+    const container = new ExtendableContainer();
+    container.setParameter('myvar', TEST_VALUE1);
+    container.setParameter('someother', true);
+
+    expect(container.getParameter<number>('myvar')).toStrictEqual(TEST_VALUE1);
+    expect(container.getParameter<boolean>('someother')).toStrictEqual(true);
+});
+
+test('getParameter() - throw if parameter was not found', () => {
+    const container = new ExtendableContainer();
+    // container.setParameter('myvar', TEST_VALUE1); // Noramlly required
+    
+    expect(() => { 
+        container.getParameter('myvar'); 
+    }).toThrow(
+        new ParameterNotFoundError('myvar')
+    );
+
+    // Don't throw if strict mode is off
+    expect(() => { 
+        container.getParameter('myvar', false); 
+    }).not.toThrow();
+});
 
 test('addExtension() / getExtension', () => {
     

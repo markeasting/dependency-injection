@@ -66,6 +66,12 @@ export type Dependencies<T extends ClassType<any>>
 /**
  * Interface for extension bundles. 
  * 
+ * You may use this system to quickly register a set of services that [belong 
+ * together](https://en.m.wikipedia.org/wiki/Cohesion_(computer_science)).
+ * 
+ * You can also use this to add 'feature toggles' for your application. 
+ * E.g. only load some bundles in some specific configuration. 
+ * 
  * @category Extension Bundles
  * @typeParam T Refers to the type of bundle configuration. 
  *            See {@link BundleConfigType}. 

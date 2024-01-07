@@ -1,16 +1,14 @@
 
+import { ParameterNotFoundError } from '.';
 import { Container } from './Container';
 
 import type { ClassType, BundleInterface, BundleConfigType } from './types';
 
 /**
- * DI container that supports extensions via {@link BundleInterface}.
+ * DI container that supports extension bundles. See {@link addExtension} and 
+ * {@link getExtension}.
  * 
- * You can add your own extension bundles to the container. 
- * You may use this system to add 'feature toggles' in your application. 
- * This is loosely based on the way Symfony handles bundles.
- * 
- * See {@link addExtension} and {@link getExtension}.
+ * For more information, refer to {@link BundleInterface}.
  * 
  * @category Container
  */
@@ -64,6 +62,42 @@ export class ExtendableContainer extends Container {
         );
 
         return ctor ? this.resolve(ctor, false) as T : undefined;
+    }
+
+    /** 
+     * Set a *superglobal*. 
+     * 
+     * Can be useful for general application config. Only use this if the 
+     * parameter is 'global', shared across multiple services or bundles.
+     * 
+     * For bundles specifically, if your parameter only applies to a single 
+     * module (in a bundle), you should use the bundle's `config`, 
+     * see {@link BundleInterface}. 
+     */
+    public setParameter(key: string, value: any): this {
+        this.parameters[key] = value;
+
+        return this;
+    }
+
+    /** 
+     * Get a *superglobal*. 
+     * 
+     * Can be useful for general application config. Only use this if the 
+     * parameter is 'global', shared across multiple services or bundles.
+     * 
+     * For bundles specifically, if your parameter only applies to a single 
+     * module (in a bundle), you should use the bundle's `config`, 
+     * see {@link BundleInterface}. 
+     * 
+     * @param strict When strict, can throw a {@link ParameterNotFoundError}.
+     */
+    public getParameter<T = any>(key: string, strict = true): T {
+        if (strict && !this.parameters[key]) {
+            throw new ParameterNotFoundError(key);
+        }
+
+        return this.parameters[key] as T;
     }
 
     /** 

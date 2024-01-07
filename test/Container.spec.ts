@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { ContainerOverrideUserError, Container, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError, assert, ParameterNotFoundError } from "../src";
+import { OverrideUserError, Container, ContainerNotReadyError, CyclicalDependencyError, ServiceNotFoundError } from "../src";
 
 const TEST_VALUE1 = 69;
 const TEST_VALUE2 = 42;
@@ -38,31 +38,6 @@ test('construct() / self-register', () => {
     expect(container.get(Container)).toStrictEqual(container);
 });
 
-test('setParameter()', () => {
-    const container = new Container();
-    container.setParameter('myvar', TEST_VALUE1);
-    container.setParameter('someother', true);
-
-    expect(container.getParameter<number>('myvar')).toStrictEqual(TEST_VALUE1);
-    expect(container.getParameter<boolean>('someother')).toStrictEqual(true);
-});
-
-test('getParameter() - throw if parameter was not found', () => {
-    const container = new Container();
-    // container.setParameter('myvar', TEST_VALUE1); // Noramlly required
-    
-    expect(() => { 
-        container.getParameter('myvar'); 
-    }).toThrow(
-        new ParameterNotFoundError('myvar')
-    );
-
-    // Don't throw if strict mode is off
-    expect(() => { 
-        container.getParameter('myvar', false); 
-    }).not.toThrow();
-});
-
 test('register()', () => {
     const container = new Container();
 
@@ -75,14 +50,14 @@ test('register()', () => {
 test('register() - throw if cyclical dependency was found', () => {
     const container = new Container();
 
-    class BadService {
-        constructor(private selfReference: BadService) {}
+    class Foo {
+        constructor(private selfReference: Foo) {}
     }
 
     expect(() => { 
-        container.register(BadService, [BadService]); 
+        container.register(Foo, [Foo]); 
     }).toThrow(
-        new CyclicalDependencyError(BadService)
+        new CyclicalDependencyError(Foo)
     );
 });
 
@@ -184,7 +159,7 @@ test('get() - throw if build was called before get', () => {
     expect(() => { 
         container.get(MyService);
     }).toThrow(
-        new ContainerNotResolvedError()
+        new ContainerNotReadyError()
     );
 });
 
@@ -296,7 +271,7 @@ test('get() - throw if build was called before override', () => {
 
         container.override(MyClass, OverrideClass);
     }).toThrow(
-        new ContainerOverrideUserError()
+        new OverrideUserError()
     );
 });
 

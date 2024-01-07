@@ -1,4 +1,4 @@
-import { OverrideUserError, ContainerNotResolvedError, CyclicalDependencyError, ServiceNotFoundError, ParameterNotFoundError, ArgumentCountError } from "./errors";
+import { OverrideUserError, ContainerNotReadyError, CyclicalDependencyError, ServiceNotFoundError, ArgumentCountError } from "./errors";
 
 import { Lifetime, ClassType, Dependencies } from './types';
 
@@ -11,10 +11,22 @@ import { Lifetime, ClassType, Dependencies } from './types';
  * const container = new Container();
  * 
  * // Or import a globally available container instance directly:
- * import { container } from "@wildsea/dependency-injection";
+ * // import { container } from "@wildsea/dependency-injection";
  * 
- * @example
+ * // 1) LoggerService depends on some log level constant
+ * container.transient(LoggerService, [LogLevel.DEBUG]);
  * 
+ * // 2) Database depends on an instance of LoggerService
+ * container.singleton(Database, [LoggerService]); 
+ * 
+ * // 3) Register 'MyApp'
+ * container.singleton(MyApp, [Database, LoggerService]); 
+ * 
+ * // 3) Build the container
+ * container.build();
+ * 
+ * // Get an instance - dependencies will be injected here 
+ * const app = container.get(MyApp); 
  * 
  * @category Container
  */
@@ -39,28 +51,9 @@ export class Container {
         this.services.set(Container, this);
     }
 
-    /** Set a 'superglobal'. Can be useful for general application config. */
-    public setParameter(key: string, value: any): this {
-        this.parameters[key] = value;
-
-        return this;
-    }
-
     /** 
-     * Get a 'superglobal'. Can be useful for general application config. 
-     * 
-     * @param strict When strict, can throw a {@link ParameterNotFoundError}.
-     */
-    public getParameter<T = any>(key: string, strict = true): T {
-        if (strict && !this.parameters[key]) {
-            throw new ParameterNotFoundError(key);
-        }
-
-        return this.parameters[key] as T;
-    }
-
-    /** 
-     * Registers a class as a service. 
+     * Registers a class as a service. You can also use {@link singleton} and 
+     * {@link transient}.
      * 
      * Throws {@link ArgumentCountError} if the given dependencies do not match 
      * the required constructor arguments. 
@@ -138,9 +131,10 @@ export class Container {
     }
 
     /** 
-     * Resolves the container. 
+     * Initializes the container, after which you can request 
+     * instances via {@link get}. 
      * 
-     * Also applies implementation overrides that were set via {@link override}.
+     * - Applies implementation overrides that were set via {@link override}.
      */
     public build(): this {
         this.#compiled = true;
@@ -154,6 +148,11 @@ export class Container {
 
     /** 
      * Overrides a service with another concrete implementation. 
+     * 
+     * Note: Javascript does not support interfaces (i.e. you cannot pass a TS 
+     * interface by value). Therefore, you should first `register()` a 
+     * 'base class' as a default implementation, after which you can 
+     * override it using `override()`.
      * 
      * You may omit the 'dependencies' argument to match the constructor 
      * signature of the overridden class. 
@@ -215,7 +214,7 @@ export class Container {
      */
     public resolve<T>(ctor: ClassType<T>, strict = true): T|undefined {
         if (!this.#compiled) {
-            throw new ContainerNotResolvedError();
+            throw new ContainerNotReadyError();
         }
 
         const type = this.#serviceLifetimes.get(ctor) || Lifetime.SHARED;

@@ -165,9 +165,9 @@ console.log(instance.foo.getValue()); // Returns '42' (see above)
 ## Overriding / mocking services
 You can override the implementation of a service by using `override()`.
 
-Javascript does not support interfaces (i.e. you cannot pass a TS 
+Note: Javascript does not support interfaces (i.e. you cannot pass a TS 
 interface by value). Therefore, you should first `register()` a 'base class' as 
-a default implementation, after which you may override it using `override()`. 
+a default implementation, after which you can override it using `override()`. 
 
 ```ts
 /* Since you cannot pass TS interfaces in the JS world, IFoo must be a `class`. */
