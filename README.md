@@ -387,11 +387,7 @@ function application_bootstrap() {
     container.setParameter('logger.loglevel', LogLevel.DEBUG);
 
     container.addExtension(DbBundle, {
-        dbUri: 'mongodb://...'
-    });
-
-    container.addExtension(DbBundle, {
-        logLevel: LogLevel.DEBUG
+        dbUri: 'mongodb://...',
     });
 
     container.singleton(BaseApp, []);
