@@ -22,14 +22,14 @@ It gives full control to build your own application container and wire services
 as you desire. When keeping your services and bundles [small and managable](https://en.m.wikipedia.org/wiki/Single_responsibility_principle), your code / coupling will 
 be better and easier to maintain. 
 
-For a concrete usecase, see the [basic example app](https://github.com/markeasting/dependency-injection/blob/master/test/example.spec.ts). 
+For a concrete usecase, see the [basic example app](https://github.com/@markeasting/dependency-injection/blob/master/test/example.spec.ts). 
 
 ## Installation
 This package is not available on NPM (just yet). 
 For now, you can clone this repository and [link the local package](https://docs.npmjs.com/cli/v10/commands/npm-linkk) 
 in your own project. 
 
-`npm link @wildsea/dependency-injection`
+`npm link @markeasting/dependency-injection`
 
 ## Development / building
 `npm run build` - run the Typescript compiler (`tsc`).
@@ -44,7 +44,7 @@ in your own project.
 ## Create a container
 
 ```ts
-import { Container } from "@wildsea/dependency-injection";
+import { Container } from "@markeasting/dependency-injection";
 
 const container = new Container();
 ```
@@ -52,7 +52,7 @@ const container = new Container();
 Or import a globally available container instance directly:
 
 ```ts
-import { container } from "@wildsea/dependency-injection";
+import { container } from "@markeasting/dependency-injection";
 ```
 
 ## Registering services
@@ -192,9 +192,9 @@ the way Symfony handles bundles.
 ### Define an extension bundle
 
 ```ts
-import { container } from "@wildsea/dependency-injection";
+import { container } from "@markeasting/dependency-injection";
 
-import type { BundleInterface } from '@wildsea/dependency-injection'
+import type { BundleInterface } from '@markeasting/dependency-injection'
 
 /* Define the bundle configuration class */
 export class MyBundleConfig {
@@ -234,13 +234,13 @@ You may use the globally available `container` instance,
 since this has extensions enabled by default. 
 
 ```ts
-import { container } from "@wildsea/dependency-injection";
+import { container } from "@markeasting/dependency-injection";
 ```
 
 Or create one explicitly: 
 
 ```ts
-import { ExtendableContainer } from "@wildsea/dependency-injection";
+import { ExtendableContainer } from "@markeasting/dependency-injection";
 
 const container = new ExtendableContainer();
 ```
@@ -289,7 +289,7 @@ const ext = container.getExtension<MyBundle>('MyBundle');
 // if (ext) { ... }
 ```
 # Putting it all together
-You can check out the basic application example [here](https://github.com/markeasting/dependency-injection/blob/master/test/example.spec.ts). 
+You can check out the basic application example [here](https://github.com/@markeasting/dependency-injection/blob/master/test/example.spec.ts). 
 
 ```ts
 /* Logger.ts */

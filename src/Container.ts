@@ -6,12 +6,12 @@ import { Lifetime, ClassType, Dependencies } from './types';
  * Minimal Dependency Injection container. 
  * 
  * @example
- * import { Container } from "@wildsea/dependency-injection";
+ * import { Container } from "@markeasting/dependency-injection";
  * 
  * const container = new Container();
  * 
  * // Or import a globally available container instance directly:
- * // import { container } from "@wildsea/dependency-injection";
+ * // import { container } from "@markeasting/dependency-injection";
  * 
  * // 1) LoggerService depends on some log level constant
  * container.transient(LoggerService, [LogLevel.DEBUG]);
