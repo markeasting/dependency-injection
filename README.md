@@ -22,7 +22,7 @@ It gives full control to build your own application container and wire services
 as you desire. When keeping your services and bundles [small and managable](https://en.m.wikipedia.org/wiki/Single_responsibility_principle), your code / coupling will 
 be better and easier to maintain. 
 
-For a concrete usecase, see the [basic example app](https://github.com/@markeasting/dependency-injection/blob/master/test/example.spec.ts). 
+For a concrete usecase, see the [basic example app](https://github.com/markeasting/dependency-injection/blob/master/test/example.spec.ts). 
 
 ## Installation
 This package is not available on NPM (just yet). 
@@ -289,7 +289,7 @@ const ext = container.getExtension<MyBundle>('MyBundle');
 // if (ext) { ... }
 ```
 # Putting it all together
-You can check out the basic application example [here](https://github.com/@markeasting/dependency-injection/blob/master/test/example.spec.ts). 
+You can check out the basic application example [here](https://github.com/markeasting/dependency-injection/blob/master/test/example.spec.ts). 
 
 ```ts
 /* Logger.ts */
