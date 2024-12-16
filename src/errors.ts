@@ -1,4 +1,16 @@
-import { ClassType } from ".";
+/**
+ *    ____         __  _             ____     __     __  _              
+ *   / __/__ ____ / /_(_)__  ___ _  / __/__  / /_ __/ /_(_)__  ___  ___ 
+ *  / _// _ `(_-</ __/ / _ \/ _ `/ _\ \/ _ \/ / // / __/ / _ \/ _ \(_-< 
+ * /___/\_,_/___/\__/_/_//_/\_, / /___/\___/_/\_,_/\__/_/\___/_//_/___/ 
+ * 						  /___/                                        
+ *
+ * https://github.com/markeasting/dependency-injection
+ * Created by Mark Oosting on 16/12/2024
+ * Copyright (c) 2024 Easting Solutions - All rights reserved.
+ */
+
+import type { ClassType } from ".";
 
 /**
  * Thrown when a service was registered with the wrong number of constructor 
