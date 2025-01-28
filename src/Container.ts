@@ -218,6 +218,23 @@ export class Container {
         return this.resolve(ctor, true) as T;
     }
 
+    /**
+     * Query the container for a specific service. 
+     * 
+     * Note that this method does not resolve dependencies. Therefore 
+     * you should only use it for querying services that are already
+     * resolved, e.g. using {@link get}.
+     * 
+     * @param fn Query function. The service instance is given as argument.
+     */
+    public query<T>(fn: (instance: any) => boolean): Array<T> {
+        if (!this.#compiled) {
+            throw new ContainerNotReadyError();
+        }
+
+        return Array.from(this.services.values()).filter(fn);
+    }
+
     /** 
      * Resolves an instance of the given class. 
      * 
